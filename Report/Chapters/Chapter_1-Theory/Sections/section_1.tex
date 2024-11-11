@@ -3,11 +3,37 @@
 
 For this section, the images $l_i \: \forall i \in \{1, ...,  3\}$ and $m_j \: \forall j \in \{1, ...,  5\}$ of the horizontal and vertical lines visible in the picture are assumed to be expressed in homogeneous coordinates.
 
-A point $p = \colvec{a \\ b}$ 
+A point $p$ whose Cartesian coordinates are $p_c = \colvec{p_X, p_Y}$ can be represented in homogeneous coordinates by any of the vectors $p_h \in \left\{ w \colvec{p_X, p_Y, 1} \; \forall w \in \mathbb{R}\setminus\{0\}\right\}$
+
+The goal of this task is to compute the image $l'_\infty$ of the vanishing line of the horizontal plane. Luckily, all the lines corresponding to one of the $l_i$ are parallel to each other and they will thus all meet at a single point at infinity $p_{\infty}^l$.
+
+Consequently $l_i \cdot p^l_\infty=0 \; \forall i \in \{1, ...,  3\}$. Were all the images $l_i$ extracted flawlessly, a single line of the form $\{\lambda \cdot p^l_\infty \; \forall \lambda \in \mathbb{R}\}$ would satisfy all these constraints and one feasible $p^l_\infty$ could be easily found as $p^l_\infty = l_1 \times l_2$.
+
+Unfortunately, the extraction process is far from flawless due to noise and approximations, thus the extracted images $l_i$ are highly unlikely to precisely intersect in just one point.
+
+By putting all the images $l_i$ in a matrix $L:=\matrixdim{3}{1}{l_1^T, l_2^T, l_3^T} \in \mathbb{R}^{3 x 3}$. The constraints now become $L\cdot p^l_\infty = \underline{0}$, thus defining the set of possible $p^l_\infty$ as the Right Null Space of $L$:
+
+\[
+\{\lambda \cdot p^l_\infty\; \forall \lambda \in \mathbb{R}\} = RNS(L)
+\]
+
+Taking into account the noisy data, finding the best $p^l_\infty$ becomes the following minimization problem:
+
+\[
+\overline{p^l_\infty} = \underset{
+\substack{%
+        \text{p s.\,t.}\, ||p||=1 \\
+      }
+}{argmin}(||L\cdot p||)
+\]
+
+The constraint $||p||=1$ is necessary to make the problem scale independent. That's because in homogeneous coordinates $p$ and $\lambda p$ represent the same point $\forall \lambda \in\mathbb{R}\setminus\{0\}$. The goal of the problem is thus more to find an optimal direction than an optimal point.
+
+One way to solve the minimization problem is through the Singular Value Decomposition (SVD)
+
+
 
 $\matrixdim{2}{3}{1, 1, 1, 1, 1, 1}$
 $\matrixdim{1}{3}{1, 1, 1}$
 $\matrixdim{2}{4}{1, 1, 1, 1, 1, 1}$
 $\matrixdim{1}{4}{1, 1, 1, \frac{2}{3}}$
-
-The goal of this task is to compute the image $l'_\infty$ of the vanishing line of the horizontal plane. Luckily, all the lines corresponding to one of the $l_i$ are parallel to each other and they will thus all meet at a single point at infinity 
