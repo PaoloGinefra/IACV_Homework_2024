@@ -1,0 +1,76 @@
+\usepackage{xparse}
+
+% ================================
+% Macro for dynamic column vector
+% ================================
+\NewDocumentCommand{\colvec}{>{\SplitList{,}}m}{%
+  \begin{bmatrix}
+    \ProcessList{#1}{\colvecitem}
+  \end{bmatrix}%
+}
+
+% Helper to process each item in the list
+\NewDocumentCommand{\colvecitem}{m}{#1 \\}
+
+% How to use it:
+% \colvec{a, b, c}
+
+
+% =======================================================
+% Macro for dynamic horizontal vector with square brackets
+% BROKEN
+% =======================================================
+\newcounter{col_for_row}
+\NewDocumentCommand{\rowvec}{>{\SplitList{,}}m}{%
+    \setcounter{col_for_row}{0}
+    \begin{bmatrix}
+        \ProcessList{#1}{\rowvecitem}%
+    \end{bmatrix}%
+}
+
+% Helper to process each item in the list, adding "&" between elements but not at the end
+\NewDocumentCommand{\rowvecitem}{m}{%
+    \ifnum \value{col_for_row}>0 % Check if the current column is not the first
+        & % Add "&" between elements
+    \fi%
+    #1% Add the current item
+    \addtocounter{col_for_row}{1} % Increment the counter after each element
+}
+
+% How to use it:
+% \rowvec{a, b, c}
+
+
+% =======================================================
+% Macro for a dynamic matrix
+% =======================================================
+\NewDocumentCommand{\matrixdim}{m m m}{%
+  \begingroup
+    \def\nrows{#1}%
+    \def\ncols{#2}%
+    \setcounter{matcol}{0} % Initialize matcol to 0 before starting
+    \matrixbody{#3}%
+  \endgroup
+}
+
+\NewDocumentCommand{\matrixbody}{>{\SplitList{,}}m}{%
+  \begin{bmatrix}
+    \ProcessList{#1}{\matrixitem}
+  \end{bmatrix}%
+}
+
+\newcounter{matcol}
+\NewDocumentCommand{\matrixitem}{m}{%
+  #1%
+  \addtocounter{matcol}{1}%
+  
+  \ifnum\value{matcol} = \ncols
+    \setcounter{matcol}{0} % Reset the counter at the end of each row
+    \\%
+  \else
+    &%
+  \fi
+}
+
+% How to use:
+% \matrixdim{2}{3}{a_{11}, a_{12}, a_{13}, a_{21}, a_{22}, a_{23}}

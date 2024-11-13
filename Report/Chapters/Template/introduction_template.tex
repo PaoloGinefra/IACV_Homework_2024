@@ -1,0 +1,40 @@
+\chapter*{Introduction}
+
+This document is intended to be both an example of the Polimi \LaTeX{} template for Master Theses,
+as well as a short introduction to its use. It is not intended to be a general introduction to \LaTeX{} itself,
+and the reader is assumed to be familiar with the basics of creating and compiling \LaTeX{} documents (see \cite{oetiker1995not, kottwitz2015latex}). 
+\\
+The cover page of the thesis must contain all the relevant information:
+title of the thesis, name of the Study Programme and School, name of the author,
+student ID number, name of the supervisor, name(s) of the co-supervisor(s) (if any), academic year.
+The above information are provided by filling all the entries in the command \verb|\puttitle{}|
+in the title page section of this template.
+\\
+Be sure to select a title that is meaningful.
+It should contain important keywords to be identified by indexer.
+Keep the title as concise as possible and comprehensible even to people who are not experts in your field.
+The title has to be chosen at the end of your work so that it accurately captures the main subject of the manuscript. 
+\\
+Since a thesis might be a substantial document, it is convenient to break it into chapters.
+You can create a new chapter as done in this template by simply using the following command
+\begin{verbatim}
+\chapter{Title of the chapter}
+\end{verbatim}
+followed by the body text.
+\\
+Especially for long manuscripts, it is recommended to give each chapter its own file.
+In this case, you write your chapter in a separated \verb|chapter_n.tex| file
+and then include it in the main file with the following command
+\begin{verbatim}
+\input{chapter_n.tex}
+\end{verbatim}
+It is recommended to give a label to each chapter by using the command
+\begin{verbatim}
+\label{ch:chapter_name}%
+\end{verbatim}
+where the argument is just a text string that you'll use to reference that part
+as follows: \textit{Chapter~\ref{ch:chapter_one} contains \sc{an introduction to}  \dots}.\\
+If necessary, an unnumbered chapter can be created by
+\begin{verbatim}
+\chapter*{Title of the unnumbered chapter}
+\end{verbatim}

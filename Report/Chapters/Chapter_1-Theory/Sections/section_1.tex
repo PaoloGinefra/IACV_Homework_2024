@@ -1,0 +1,97 @@
+\section{Question 1 - the vanishing line of the horizontal plane}
+\label{th_1}
+
+For this section, the images $l_i \: \forall i \in \{1, ...,  3\}$ and $m_j \: \forall j \in \{1, ...,  5\}$ of the horizontal and vertical lines visible in the picture are assumed to be expressed in homogeneous coordinates.
+
+A point $p$ whose Cartesian coordinates are $p_c = \colvec{p_X, p_Y}$ can be represented in homogeneous coordinates by any of the vectors $p_h \in \left\{ w \colvec{p_X, p_Y, 1} \; \forall w \in \mathbb{R}\setminus\{0\}\right\}$
+
+The goal of this task is to compute the image $l'_\infty$ of the vanishing line of the horizontal plane. Luckily, all the lines corresponding to one of the $l_i$ are parallel to each other and they will thus all meet at a single point at infinity $p_{\infty}^l$.
+
+Consequently $l_i \cdot p^l_\infty=0 \; \forall i \in \{1, ...,  3\}$. Were all the images $l_i$ extracted flawlessly, a single line of the form $\{\lambda \cdot p^l_\infty \; \forall \lambda \in \mathbb{R}\}$ would satisfy all these constraints and one feasible $p^l_\infty$ could be easily found as $p^l_\infty = l_1 \times l_2$.
+
+Unfortunately, the extraction process is far from flawless due to noise and approximations, thus the extracted images $l_i$ are highly unlikely to precisely intersect in just one point.
+
+By putting all the images $l_i$ in a matrix $L:=\matrixdim{3}{1}{l_1^T, l_2^T, l_3^T} \in \mathbb{R}^{3 x 3}$. The constraints now become $L\cdot p^l_\infty = \underline{0}$, thus defining the set of possible $p^l_\infty$ as the Right Null Space of $L$:
+
+\[
+\{\lambda \cdot p^l_\infty\; \forall \lambda \in \mathbb{R}\} = RNS(L)
+\]
+
+Taking into account the noisy data, finding the best $p^l_\infty$ becomes the following least square error minimization problem:
+
+\[
+\overline{p^l_\infty} = \underset{
+\substack{%
+        \text{p s.\,t.}\, ||p||=1 \\
+      }
+}{argmin}(||L\cdot p||^2)
+\]
+
+The constraint $||p||=1$ is necessary to make the problem scale independent. That's because in homogeneous coordinates $p$ and $\lambda p$ represent the same point $\forall \lambda \in\mathbb{R}\setminus\{0\}$. The goal of the problem is thus more to find an optimal direction than an optimal point.
+
+One way to solve the minimization problem is through the Singular Value Decomposition (SVD).
+
+Using the SVD the matrix $L$ can be expressed as:
+\begin{equation}
+    \begin{matrix}
+        L = U \Sigma V^T \\
+        \text{ where } \\
+        U, \Sigma, V \in \mathbb{R}^{3x3}, \\
+        U\cdot U^T = I, \\
+        V\cdot V^T = I,\\
+        \Sigma_{ii} = \sigma_i \in \mathbb{R} \; \forall i \in \{1, ..., 3\}, \\
+         \Sigma_{ij} = 0 \; \forall i \in \{1, ..., 3\}, \forall j \in \{1, ..., 3\}, i\neq j, \\
+         |\sigma_i| >= |\sigma_j| \; \forall i, j \in \{1, ..., 3\}, i<j
+    \end{matrix}
+\end{equation}
+
+Using the definition of matrix multiplication it can be derived that:
+
+\begin{equation} \label{eq:sum_eq}
+    \begin{matrix}
+        L = \sum_{i = 1}^3{\sigma_i u_i v_i^T}\\
+        \text{ with }\\
+        u_i := U \cdot e_i, \\
+        v_i := V\cdot e_i, \\
+        e_i := \text{"i-th canonical basis"}
+    \end{matrix}
+\end{equation}
+
+
+Now since $V$ is an orthogonal matrix, its columns are a basis of $\mathbb{R}^3$ and $\forall i \in \{1, ..., 3\}\; ||v_i|| = 1$. Every vector $p \in \mathbb{R}^3$ can thus be expressed as:
+
+\begin{equation} \label{eq:decompositionInV}
+    p = \alpha_1 \cdot v_1 + \dots + \alpha_3 \cdot v_3 \text{ with } \alpha_i \in \mathbb{R} \forall i \in \{1, ..., 3\}
+\end{equation}
+
+Now, using \ref{eq:sum_eq} and \ref{eq:decompositionInV}:
+
+\begin{equation}
+    L \cdot p = \sum_{i = 1}^3{\sigma_i u_i \alpha_i}
+\end{equation}
+
+The matrix $U$ is also orthogonal. Consequently, all its columns are orthogonal to each other, follows that:
+
+\begin{equation}
+    ||L \cdot p||^2 = \sum_{i = 1}^3{\sigma_i^2 \alpha_i^2 ||u_i||^2 = \sum_{i = 1}^3{\sigma_i^2 \alpha_i^2}}
+\end{equation}
+
+The only $p$ of interest are the ones such that $||\overline{p}|| = 1$:
+
+\begin{equation}
+    ||\overline{p}||^2 = \sum_{i = 1}^3{\alpha_i ^ 2 ||v_i||^2} = \sum_{i = 1}^3{\alpha_i ^ 2} = 1
+\end{equation}
+
+Thus, since the $\sigma_i$ are in decreasing order:
+
+\begin{equation}
+    ||L\cdot \overline{p}||^2 \geq \sigma_3^2 \; \forall\overline{p} \in \mathbb{R}^3, ||\overline{p}|| = 1
+\end{equation}
+\begin{equation}
+    ||L\cdot \overline{p}||^2 = \sigma_3^2 \iff \alpha_3 = 1 \; \land \alpha_i = 0 \forall i \in \{1, ..., 2\} \iff \overline{p} = v_3
+\end{equation}
+
+$\matrixdim{2}{3}{1, 1, 1, 1, 1, 1}$
+$\matrixdim{1}{3}{1, 1, 1}$
+$\matrixdim{2}{4}{1, 1, 1, 1, 1, 1}$
+$\matrixdim{1}{4}{1, 1, 1, \frac{2}{3}}$
