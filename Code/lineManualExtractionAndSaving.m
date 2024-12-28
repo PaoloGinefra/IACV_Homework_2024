@@ -40,7 +40,7 @@ for i = 1:n_lines
     title(['Select the end points of the ' name ' lines']);
     segment = drawline("Color", "r");
     
-    points(:, i:i+1) = segment.Position';
+    points(:, 2*i-1:2*i) = segment.Position';
     a = [segment.Position(1,:)'; 1];
     b = [segment.Position(2,:)'; 1];
     l = cross(a, b);
