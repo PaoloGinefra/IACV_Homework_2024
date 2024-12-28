@@ -25,12 +25,12 @@ im = imread('../Assignment/Homework Image.jpg');
 load('lines.mat');
 
 %%Find the intersection of the l lines
-[U, s, V] = svd(l_lines');
+[~, ~, V] = svd(l_lines');
 l_intersection = V(:, end);
 l_intersection_euclidian = l_intersection(1:2) / l_intersection(3);
 
 %%Find the intersection of the m lines
-[U, s, V] = svd(m_lines');
+[~, ~, V] = svd(m_lines');
 m_intersection = V(:, end);
 m_intersection_euclidian = m_intersection(1:2) / m_intersection(3);
 
