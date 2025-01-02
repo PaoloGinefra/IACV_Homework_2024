@@ -5,129 +5,78 @@ clear;
 %% Load the image
 im = imread('../Assignment/Homework Image.jpg');
 
+%% Load the lines for visualization purposes
+load('./lines.mat');
+
 %% load the line at infinity
 load('./VanishingLineHorizontalPlane.mat');
 
 %% load conic
 load('./CircleC.mat');
 
-%% Compute the homography
-H = [-0.1, 0, 0; 0, -0.1, 0; l_h_inf_prime'];
-
-%% Apply the homography
-im_warped = warpImage(im, H);
+%% Compute the homography for affine rectification
+l_h_inf_prime = l_h_inf_prime / l_h_inf_prime(3);
+H_aff = [0.1, 0, 0; 0, 0.1, 0; l_h_inf_prime'];
+H_aff_inv = inv(H_aff);
 
 %% Sanity check the homography
-disp('Sanity Check: line at infinity after homography');
-disp(inv(H)' * l_h_inf_prime);
+fprintf('Sanity Check [Affine Rectification]\nline at infinity after homography:');
+disp(warpLine(l_h_inf_prime, H_aff_inv));
 
-%% Show the images
-figure;
-subplot(1, 2, 1);
-imshow(im);
-title('Original Image');
+%% Apply the homography to the image
+im_warped = warpImage(im, H_aff);
 
-% Plot The conic
-conicPlot = zeros(size(im, 1), size(im, 2));
+%% Compute the image of the lines
+m_lines_aff = warpLine(m_lines, H_aff_inv);
+m_points_aff = warpPoint(m_points, H_aff);
 
-for i = 1:size(im, 1)
-    for j = 1:size(im, 2)
-        point = [j, i, 1];
-        conicPlot(i, j) = point * C * point';
-    end
-end
+l_lines_aff = warpLine(l_lines, H_aff_inv);
+l_points_aff = warpPoint(l_points, H_aff);
+
+% Compute conic Errors
+conicErrors = computeConicErrors(C, im);
+[center, axes, angle] = paramsFromHomogenousConic_separated(C);
 
 %% Apply the homography
-H_inv = inv(H);
-C_warped = H_inv' * C * H_inv;
-C_warped = C_warped ./ C_warped(3, 3);
+C_aff = warpConic(C, H_aff_inv);
+C_aff_par = paramsFromHomogenousConic(C_aff);
 
-disp(C_warped);
-
-disp('Conic Warped');
-
-%% Plot the conic
-conicPlotWarped = zeros(size(im_warped, 1), size(im_warped, 2));
-
-for i = 1:size(im_warped, 1)
-    for j = 1:size(im_warped, 2)
-        point = [j, i, 1];
-        conicPlotWarped(i, j) = point * C_warped * point';
-    end
-end
+%% Compute the conic errors after the affine rectification
+C_aff_errors = computeConicErrors(C_aff, im_warped);
 
 %% convert the conic coefficient to geometric parameters
-par_geo = AtoG([C_warped(1,1),2*C_warped(1,2),C_warped(2,2),2*C_warped(1,3),2*C_warped(2,3),C_warped(3,3)]);
-center = par_geo(1:2);
-axes = par_geo(3:4);
-angle = par_geo(5);
-
-
-disp('Conic Plot Computed');
-
-subplot(1, 2, 1);
-imshow(im);
-hold on;
-contour(conicPlot, [0, 0], 'r', 'LineWidth', 2);
-% contour(conicPlotWarped, [0, 0], 'r', 'LineWidth', 2);
-title('Original image + Conic');
-hold off;
-
-subplot(1, 2, 2);
-imshow(im_warped);
-hold on;
-contour(conicPlotWarped, [0, 0], 'r', 'LineWidth', 2);
-plot(center(1),center(2),'ro','Markersize',20);
-title('Image + affine rectification');
-hold off;
-
+[center_aff, axes_aff, angle_aff] = paramsFromHomogenousConic_separated(C_aff);
 
 %% Metric rectification
 % Rotation
-U = [cos(angle), -sin(angle); sin(angle), cos(angle);];
+U = [cos(angle_aff), -sin(angle_aff); sin(angle_aff), cos(angle_aff);];
 
 % rescaling the axis to make them equal
-a = axes(1);
-b = axes(2);
+a = axes_aff(1);
+b = axes_aff(2);
 S = diag([1, a/b]);
 K = U*S*U';
 H_2 = [K, zeros(2, 1); 0, 0, 1];
 
-H_metric = H_2 * H;
+H_metric = H_2 * H_aff;
+H_metric_inv = inv(H_metric);
 
 %% Apply the metric rectification
 im_metric = warpImage(im, H_metric);
 
 %% Compute the image of the conic
-H_metric_inv = inv(H_metric);
-C_metric = H_metric_inv' * C * H_metric_inv;
+C_metric = warpConic(C, H_metric_inv);
 
-disp('Conic Metric');
-disp(C_metric);
-
-%% Plot the conic
-conicPlotMetric = zeros(size(im, 1), size(im, 2));
-
-for i = 1:size(im, 1)
-    for j = 1:size(im, 2)
-        point = [j, i, 1];
-        conicPlotMetric(i, j) = point * C_metric * point';
-    end
-end
-
-disp('Conic Plot Metric Computed');
+%% Compute the conic errors after the metric rectification
+C_metric_errors = computeConicErrors(C_metric, im_metric);
+[center_metric, axes_metric, angle_metric] = paramsFromHomogenousConic_separated(C_metric);
 
 %% Compute the images of the lines
-load("./lines.mat")
-m_lines_metric = H_metric_inv' * m_lines;
-m_lines_metric = m_lines_metric ./ vecnorm(m_lines_metric);
-m_points_metric = H_metric * [m_points; ones(1, size(m_points, 2))];
-m_points_metric_euclidian = m_points_metric(1:2, :) ./ m_points_metric(3, :);
+m_lines_metric = warpLine(m_lines, H_metric_inv);
+m_points_metric = warpPoint(m_points, H_metric);
 
-l_lines_metric = H_metric_inv' * l_lines;
-l_lines_metric = l_lines_metric ./ vecnorm(l_lines_metric);
-l_points_metric = H_metric * [l_points; ones(1, size(l_points, 2))];
-l_points_metric_euclidian = l_points_metric(1:2, :) ./ l_points_metric(3, :);
+l_lines_metric = warpLine(l_lines, H_metric_inv);
+l_points_metric = warpPoint(l_points, H_metric);
 
 %% Sanity check: othogonality of rectified lines
 disp('Sanity Check: Orthogonality of rectified lines');
@@ -135,25 +84,67 @@ disp(m_lines_metric' * l_lines_metric);
 
 %% Show the images
 figure;
-subplot(1, 2, 1);
+subplot(2, 3, 1);
 imshow(im);
 title('Original Image');
 
-subplot(1, 2, 2);
+subplot(2, 3, 2);
+imshow(im_warped);
+title('Affine Rectification');
+
+subplot(2, 3, 3);
+imshow(im_metric);
+title('Metric Rectification');
+
+subplot(2, 3, 4);
+imshow(im);
+hold on;
+plotLines(m_points, 'g', 'm', 2);
+plotLines(l_points, 'r', 'l', 2);
+contour(conicErrors, [0, 0], 'b', 'LineWidth', 2);
+plotConicParams(center, axes, angle, 'b');
+title('Original Image + lines + conic');
+
+subplot(2, 3, 5);
+imshow(im_warped);
+hold on;
+plotLines(m_points_aff, 'g', 'm', 2);
+plotLines(l_points_aff, 'r', 'l', 2);
+contour(C_aff_errors, [0, 0], 'b', 'LineWidth', 2);
+plotConicParams(center_aff, axes_aff, angle_aff, 'b');
+title('Affine Rectification + lines + conic');
+
+subplot(2, 3, 6);
 imshow(im_metric);
 hold on;
-contour(conicPlotMetric, [0, 0], 'r', 'LineWidth', 2);
+plotLines(m_points_metric, 'g', 'm', 2);
+plotLines(l_points_metric, 'r', 'l', 2);
+contour(C_metric_errors, [0, 0], 'b', 'LineWidth', 2);
+plotConicParams(center_metric, axes_metric, angle_metric, 'b');
+title('Metric Rectification + lines + conic');
 
-for i = 1:size(m_lines_metric, 2)
-    line(m_points_metric_euclidian(1, 2*i-1:2*i), m_points_metric_euclidian(2, 2*i-1:2*i), 'Color', 'g', 'LineWidth', 2);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                       USEFUL FUNCTIONS                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function [warpedPoint] = warpPoint(point, H)
+if(size(point, 1) == 2)
+    point = [point; ones(1, size(point, 2))];
+end
+warpedPoint = H * point;
+warpedPoint = warpedPoint ./ warpedPoint(3, :);
+warpedPoint = warpedPoint(1:2, :);
 end
 
-for i = 1:size(l_lines_metric, 2)
-    line(l_points_metric_euclidian(1, 2*i-1:2*i), l_points_metric_euclidian(2, 2*i-1:2*i), 'Color', 'r', 'LineWidth', 2);
+function [warpedLine] = warpLine(line, H_inv)
+warpedLine = H_inv' * line;
+warpedLine = warpedLine ./ vecnorm(warpedLine);
 end
-hold off
-title('Image + metric rectification');
 
+function [warpedConic] = warpConic(conic, H_inv)
+warpedConic = H_inv' * conic * H_inv;
+end
 
 function [imageWarped] = warpImage(image, H)
 h = size(image, 1);
@@ -200,4 +191,46 @@ for i = 1:size(imageWarped, 1)
         end
     end
 end
+end
+
+function [conicErrors] = computeConicErrors(C, im)
+conicErrors = zeros(size(im, 1), size(im, 2));
+
+for i = 1:size(im, 1)
+    for j = 1:size(im, 2)
+        point = [j, i, 1];
+        conicErrors(i, j) = point * C * point';
+    end
+end
+end
+
+function [conicParams] = paramsFromHomogenousConic(C)
+conicParams = AtoG([C(1, 1), 2 * C(1, 2), C(2, 2), 2 * C(1, 3), 2 * C(2, 3), C(3, 3)]);
+end
+
+function [center, axes, angle] = paramsFromHomogenousConic_separated(C)
+conicParams = paramsFromHomogenousConic(C);
+center = conicParams(1:2);
+axes = conicParams(3:4);
+angle = conicParams(5);
+end
+
+function plotLines(points, color, name, LineWidth)
+for i = 1:(size(points, 2)/2)
+    line(points(1, 2*i-1:2*i), points(2, 2*i-1:2*i), 'Color', color, 'LineWidth', LineWidth);
+    midPoint = mean(points(:, 2*i-1:2*i), 2);
+    text(midPoint(1), midPoint(2), [name num2str(i)], 'Color', color, 'FontSize', 11);
+end
+end
+
+function plotConicParams(center, axes, angle, color)
+%% Plot the center
+plot(center(1), center(2), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+
+%% Plot the axes
+roationMatrix = [cos(angle), -sin(angle); sin(angle), cos(angle)];
+axesVectors = roationMatrix * diag(axes);
+quiver(center(1), center(2), axesVectors(1, 1), axesVectors(2, 1), 'Color', color, 'LineWidth', 2);
+quiver(center(1), center(2), axesVectors(1, 2), axesVectors(2, 2), 'Color', color, 'LineWidth', 2);
+
 end
