@@ -28,3 +28,7 @@ im_edges = im_edges .* image_mask;
 figure;
 imshow(im_edges);
 title(['Canny Edges with mask - Threshold: ', num2str(threshold), ' Sigma: ', num2str(sigma)]);
+
+%% Save the edges
+currentTime = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
+save(['./edges_', currentTime, '.mat'], 'im_edges');
