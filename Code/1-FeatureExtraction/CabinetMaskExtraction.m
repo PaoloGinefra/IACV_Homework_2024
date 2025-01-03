@@ -70,13 +70,16 @@ green_mask = im(:, :, 2) > green_threshold;
 
 sat_and_green_mask = sat_mask & green_mask;
 
-erosion_kernel_size = 27;
-sat_and_green_mask_eroded = imerode(sat_and_green_mask, ones(erosion_kernel_size));
+erosion_kernel_size = 20;
+erosion_kernel = strel('disk', erosion_kernel_size);
+sat_and_green_mask_eroded = imerode(sat_and_green_mask, erosion_kernel);
 
-sat_and_green_mask_opened = imopen(sat_and_green_mask, ones(erosion_kernel_size));
+dilation_kernel_size_increment = 20;
+dilation_kernel = strel('disk', erosion_kernel_size + dilation_kernel_size_increment);
+sat_and_green_mask_opened = imdilate(sat_and_green_mask_eroded, dilation_kernel);
 
-gaussian_kernel_size = 11;
-gaussian_sigma = 10;
+gaussian_kernel_size = 50;
+gaussian_sigma = 15;
 sat_and_green_mask_opened_smoothed = imgaussfilt(double(sat_and_green_mask_opened), gaussian_sigma);
 
 %% Plot the masks
@@ -118,3 +121,6 @@ im_masked(:, :, 3) = uint8(double(im_masked(:, :, 3)) .* sat_and_green_mask_open
 figure;
 imshow(im_masked);
 title('Masked Image');
+
+%% Save the mask
+save('./image_mask.mat', 'sat_and_green_mask_opened_smoothed');
