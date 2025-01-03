@@ -123,4 +123,5 @@ imshow(im_masked);
 title('Masked Image');
 
 %% Save the mask
-save('./image_mask.mat', 'sat_and_green_mask_opened_smoothed');
+image_mask = sat_and_green_mask_opened_smoothed;
+save('./image_mask.mat', 'image_mask');
