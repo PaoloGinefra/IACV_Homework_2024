@@ -8,6 +8,8 @@ im = imread('../../Assignment/Homework Image.jpg');
 %% Load the mask
 load('./image_mask.mat');
 
+im = double(im) .* image_mask;
+im = uint8(im);
 %% Convert image to hsv
 im_hsv = rgb2hsv(im);
 
@@ -16,7 +18,7 @@ im_gray = im(:, :, 1);%%rgb2gray(im);
 
 %% Apply Cannys edge detection
 threshold = [0.05, 0.15];
-sigma = 10;
+sigma = 5;
 im_edges = edge(im_gray, 'canny', threshold, sigma);
 
 % mask the edges
