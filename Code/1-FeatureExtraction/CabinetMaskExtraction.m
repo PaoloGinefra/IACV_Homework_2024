@@ -75,8 +75,8 @@ sat_and_green_mask_eroded = imerode(sat_and_green_mask, ones(erosion_kernel_size
 
 sat_and_green_mask_opened = imopen(sat_and_green_mask, ones(erosion_kernel_size));
 
-gaussian_kernel_size = 5;
-gaussian_sigma = 2;
+gaussian_kernel_size = 11;
+gaussian_sigma = 10;
 sat_and_green_mask_opened_smoothed = imgaussfilt(double(sat_and_green_mask_opened), gaussian_sigma);
 
 %% Plot the masks
@@ -107,5 +107,14 @@ subplot(nrows, ncols, 6);
 imshow(sat_and_green_mask_opened_smoothed);
 title(['Opened Mask Smoothed - kernel size:', num2str(gaussian_kernel_size), ' sigma:', num2str(gaussian_sigma)]);
 
-
 impixelinfo;
+
+%% Mask the original image
+im_masked = im;
+im_masked(:, :, 1) = uint8(double(im_masked(:, :, 1)) .* sat_and_green_mask_opened_smoothed);
+im_masked(:, :, 2) = uint8(double(im_masked(:, :, 2)) .* sat_and_green_mask_opened_smoothed);
+im_masked(:, :, 3) = uint8(double(im_masked(:, :, 3)) .* sat_and_green_mask_opened_smoothed);
+
+figure;
+imshow(im_masked);
+title('Masked Image');
