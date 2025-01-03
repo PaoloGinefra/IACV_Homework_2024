@@ -52,3 +52,7 @@ im_overlay(im_edges_rgb == 255) = 255;
 figure;
 imshow(im_overlay);
 title('Overlay of edges on the original image');
+
+inner_edges = im_edges;
+currentTime = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
+save(['./edges_inner_', currentTime, '.mat'], 'inner_edges');
