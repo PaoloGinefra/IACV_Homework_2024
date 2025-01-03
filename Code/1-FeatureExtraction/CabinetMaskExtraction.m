@@ -79,7 +79,7 @@ dilation_kernel = strel('disk', erosion_kernel_size + dilation_kernel_size_incre
 sat_and_green_mask_opened = imdilate(sat_and_green_mask_eroded, dilation_kernel);
 
 gaussian_kernel_size = 50;
-gaussian_sigma = 15;
+gaussian_sigma = 30;
 sat_and_green_mask_opened_smoothed = imgaussfilt(double(sat_and_green_mask_opened), gaussian_sigma);
 
 %% Plot the masks
@@ -124,4 +124,4 @@ title('Masked Image');
 
 %% Save the mask
 image_mask = sat_and_green_mask_opened_smoothed;
-save('./image_mask.mat', 'image_mask');
+save('./image_mask_tight.mat', 'image_mask');
