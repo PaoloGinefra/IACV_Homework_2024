@@ -14,6 +14,10 @@ im_hsv = rgb2hsv(im);
 %% Convert to grayscale
 im_gray = im_hsv(:, :, 2); %rgb2gray(im);
 
+%% Smooth the image
+sigma = 1;
+im_gray = imgaussfilt(im_gray, sigma);
+
 %% Compute the x and y gradients
 [Gx, Gy] = imgradientxy(im_gray);
 
@@ -21,8 +25,8 @@ im_gray = im_hsv(:, :, 2); %rgb2gray(im);
 [Gmag, Gdir] = imgradient(Gx, Gy);
 
 % Smooth gdir
-sigma_gdir = 1;
-Gdir = imgaussfilt(Gdir, sigma_gdir);
+% sigma_gdir = 1;
+% Gdir = imgaussfilt(Gdir, sigma_gdir);
 
 Gdir_color_hsv = zeros(size(im_gray, 1), size(im_gray, 2), 3);
 Gdir_color_hsv(:, :, 1) = (Gdir + 180) / 360;
@@ -57,6 +61,45 @@ title('Gradient X and Y');
 
 impixelinfo;
 
+%% Canny edge detection
+threshold = [0.05, 0.2];
+sigma = 1.5;
+im_edges = edge(im_gray, 'canny', threshold, sigma);
+
+% mask the edges
+im_edges = im_edges .* image_mask;
+
+figure;
+imshow(im_edges);
+title(['Canny Edges with mask - Threshold: ', num2str(threshold), ' Sigma: ', num2str(sigma)]);
+
+% smooth the edges
+sigma_edges = 8;
+im_edges_smoothed = imgaussfilt(im_edges, sigma_edges);
+
+figure;
+imshow(im_edges_smoothed);
+title(['Smoothed Edges - Sigma: ', num2str(sigma_edges)]);
+impixelinfo;
+
+im_edges_smoothed_threshold = 0.1;
+im_edges_smoothed(im_edges_smoothed >= im_edges_smoothed_threshold) = 1;
+im_edges_smoothed(im_edges_smoothed < im_edges_smoothed_threshold) = 0;
+
+%dilate the mask
+se = strel('disk', 5);
+im_edges_smoothed = imdilate(im_edges_smoothed, se);
+
+figure;
+imshow(im_edges_smoothed);
+title(['Thresholded Smoothed Edges - Threshold: ', num2str(im_edges_smoothed_threshold)]);
+
+im_edges = im_edges .* (1 - im_edges_smoothed);
+
+figure;
+imshow(im_edges);
+title('Edges with smoothed edges removed');
+impixelinfo;
 
 % Clamp the gradient magnitude to [0, 1]
 % mask the gradient magnitude using the image mask
@@ -70,10 +113,12 @@ imshow(Gmag_clamped);
 title('Clamped Gradient Magnitude');
 
 % mask the gradient dir with the gradient magnitude
+% Gdir_mask = Gmag_clamped;
+Gdir_mask = im_edges;
 Gdir_masked = Gdir_color;
-Gdir_masked(:, :, 1) = Gdir_masked(:, :, 1) .* Gmag_clamped;
-Gdir_masked(:, :, 2) = Gdir_masked(:, :, 2) .* Gmag_clamped;
-Gdir_masked(:, :, 3) = Gdir_masked(:, :, 3) .* Gmag_clamped;
+Gdir_masked(:, :, 1) = Gdir_masked(:, :, 1) .* Gdir_mask;
+Gdir_masked(:, :, 2) = Gdir_masked(:, :, 2) .* Gdir_mask;
+Gdir_masked(:, :, 3) = Gdir_masked(:, :, 3) .* Gdir_mask;
 
 figure;
 imshow(Gdir_masked);
@@ -84,7 +129,7 @@ Gdir_rad = Gdir * pi / 180;
 Gdir_x = cos(Gdir_rad);
 Gdir_y = -sin(Gdir_rad);
 
-[ys, xs] = find(Gmag_clamped == 1);
+[ys, xs] = find(im_edges > 0.5);
 points = [xs / size(im, 2), ys/size(im, 1), ones(size(xs))]';
 
 Gdir_x_selected = Gdir_x(sub2ind(size(Gdir_x), ys, xs));
@@ -101,7 +146,7 @@ lines = lines ./ sqrt(lines(1, :).^2 + lines(2, :).^2 + lines(3, :).^2);
 figure;
 imshow(im);
 hold on;
-randomIndices = randperm(size(lines, 2), 1000);
+randomIndices = randperm(size(lines, 2));
 for j = 1:10
     i = randomIndices(j);
     plot([1, size(im, 2)], [(-lines(3, i) / lines(2, i))*size(im, 1), (-lines(3, i) - lines(1, i)) / lines(2, i) * size(im, 1)], 'Color', 'r');
@@ -117,7 +162,7 @@ title('Selected Gradient Direction');
 figure;
 hold on;
 % use random indices
-randomLines = randomIndices(1:1000);
+randomLines = randomIndices(1:100);
 % Use Gdir_color as the color
 for k = 1:length(randomLines)
     scatter3(lines(1, randomLines(k)), lines(2, randomLines(k)), lines(3, randomLines(k)), 'MarkerEdgeColor', squeeze(Gdir_color(ys(randomLines(k)), xs(randomLines(k)), :))');
@@ -135,9 +180,9 @@ hold off;
 
 %% Clustering of the lines
 % Use DbScan to cluster the lines
-epsilon = 0.005;
-density = 2000000;
-minPts = floor(density * epsilon ^ 2);
+epsilon = 0.008;
+% density = 1000000;
+minPts = 40;
 disp(['Epsilon: ', num2str(epsilon)]);
 disp(['MinPts: ', num2str(minPts)]);
 [clusterIdx, isNoise] = dbscan(lines', epsilon, minPts);
@@ -154,7 +199,7 @@ for i = 1:max(clusterIdx)
 end
 
 % Plot the clusters
-figure(7);
+figure();
 hold on;
 for i = 1:max(clusterIdx)
     cluster = lines(:, clusterIdx == i);
@@ -164,7 +209,7 @@ hold off;
 grid on;
 
 % Plot the centroids as lines on the image
-figure(8);
+figure();
 imshow(im);
 hold on;
 for i = 1:max(clusterIdx)
