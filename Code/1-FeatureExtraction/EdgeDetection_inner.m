@@ -6,7 +6,7 @@ clear;
 im = imread('../../Assignment/Homework Image.jpg');
 
 %% Load the mask
-load('./image_mask.mat');
+load('./image_mask_interior_2025-01-05_11-22-12.mat');
 
 im = double(im) .* image_mask;
 im = uint8(im);
@@ -29,7 +29,7 @@ title('Grayscale Image');
 
 %% Apply Cannys edge detection
 threshold = [0.05, 0.1];
-sigma = 5;
+sigma = 2;
 im_edges = edge(im_gray, 'canny', threshold, sigma);
 
 % mask the edges
