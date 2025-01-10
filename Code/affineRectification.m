@@ -12,7 +12,8 @@ load('./lines.mat');
 load('./VanishingLineHorizontalPlane.mat');
 
 %% load conic
-load('./CircleC.mat');
+% load('./CircleC.mat');
+load('./1-FeatureExtraction/ConicExtraction/ExtractedConic.mat');
 
 %% Compute the homography for affine rectification
 l_h_inf_prime = l_h_inf_prime / l_h_inf_prime(3);
