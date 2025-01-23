@@ -155,6 +155,9 @@ depth_m = average_m_length / l1_legnth;
 disp('Depth of m');
 disp(depth_m);
 
+%% Save the matric rectification homography
+save('./H_metric.mat', 'H_metric');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       USEFUL FUNCTIONS                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
