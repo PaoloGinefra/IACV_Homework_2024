@@ -76,6 +76,17 @@ H_2 = [K, zeros(2, 1); 0, 0, 1];
 H_metric = H_2 * H_aff;
 H_metric_inv = inv(H_metric);
 
+%% Apply rotation to make l lines paralle to the x-axis
+l_lines_metric = warpLine(l_lines, H_metric_inv);
+
+angles = rad2deg(atan2(l_lines_metric(2, :), l_lines_metric(1, :)));
+avg_rotation = -mean(angles) + 90;
+R = [cosd(avg_rotation), -sind(avg_rotation); sind(avg_rotation), cosd(avg_rotation)];
+H_rotation = [R, zeros(2, 1); 0, 0, 1];
+
+H_metric = H_rotation * H_metric;
+H_metric_inv = inv(H_metric);
+
 %% Apply the metric rectification
 im_metric = warpImage(im, H_metric);
 
@@ -98,6 +109,8 @@ l_points_metric = warpPoint(l_points, H_metric);
 %% Sanity check: othogonality of rectified lines
 disp('Sanity Check [Metric Rectification]: Orthogonality of rectified lines');
 disp(m_lines_metric(1:2, :)' * l_lines_metric(1:2, :));
+
+
 
 %% Show the images
 figure;
@@ -148,15 +161,17 @@ title('Metric Rectification + lines + conic');
 
 %% Compute depth m
 m_lines_length = vecnorm(m_points_metric(:, 1:2:end) - m_points_metric(:, 2:2:end));
-l1_legnth = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
+l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
+l2_length = vecnorm(l_points_metric(:, 3) - l_points_metric(:, 4));
 average_m_length = mean(m_lines_length);
-depth_m = average_m_length / l1_legnth;
+depth_m = average_m_length / l1_length;
 
 disp('Depth of m');
 disp(depth_m);
 
 %% Save the matric rectification homography
-save('./H_metric.mat', 'H_metric');
+% H_metric = H_metric/l1_legnth;
+save('./H_metric.mat', 'H_metric', 'l1_length', "l2_length", 'l_points_metric', 'm_points_metric', 'depth_m');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       USEFUL FUNCTIONS                              %

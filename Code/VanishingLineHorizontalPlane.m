@@ -64,3 +64,6 @@ title('Vanishing Line');
 
 %% Save the vanishing line
 save('vanishingLineHorizontalPlane.mat', 'l_h_inf_prime');
+
+%% Save the vanishing points
+save('vanishingPoints.mat', 'l_intersection', 'm_intersection');
