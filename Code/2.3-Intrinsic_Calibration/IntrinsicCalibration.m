@@ -75,64 +75,6 @@ l_h_inf_prime_x = l_h_inf_prime(1);
 l_h_inf_prime_y = l_h_inf_prime(2);
 l_h_inf_prime_w = l_h_inf_prime(3);
 
-% A = [
-%     h1_x * h2_x, h1_x, h1_y, 1;
-%     h1_x^2 - h2_x^2, h1_x-h2_x, h1_y - h2_y, 0;
-%     v_x, 1, 0, 0;
-%     0, 0, 1, 0
-%     0, 0, 0, 1
-%     ];
-
-% b = [
-%     -h1_y*h2_y;
-%     -h1_y^2 + h2_y^2;
-%     l_h_inf_prime_x;
-%     l_h_inf_prime_y - v_y;
-%     1
-%     ];
-
-% A = [
-%     h1_x * h2_x, h1_x, h1_y*h2_y, h1_y;
-%     h1_x^2 - h2_x^2, h1_x-h2_x, h1_y^2 - h2_y^2, h1_y - h2_y;
-%     v_x, 1, 0, 0;
-%     0, 0, v_y, 1
-%     ];
-
-% b = [
-%     -1;
-%     0;
-%     l_h_inf_prime_x;
-%     l_h_inf_prime_y;
-%     ];
-
-% A = [
-%     h1_x*h2_x, h1_x*h2_w, h1_w*h2_w;
-%     h1_x^2 - h2_x^2, h1_x*h1_w - h2_x*h2_w, h1_w^2 - h2_w^2;
-%     v_x, v_w, 0
-%     0, 0, v_w
-%     ];
-
-% b = [
-%     -1;
-%     0;
-%     l_h_inf_prime_x;
-%     l_h_inf_prime_w;
-%     ];
-
-% A = [
-%     h1_x * h2_x, h1_x, h1_y*h2_y, h1_y;
-%     h1_x^2 - h2_x^2, h1_x-h2_x, h1_y^2 - h2_y^2, h1_y - h2_y;
-%     v_x * h1_x, v_x, v_y * h1_y, v_y;
-%     v_x * h2_x, v_x, v_y * h2_y, v_y
-%     ];
-
-% b = [
-%     -1;
-%     0;
-%     -1;
-%     -1;
-%     ];
-
 A = [
     h1_x * h2_x, h1_x + h2_x, h1_y+h2_y, 1;
     h1_x^2 - h2_x^2, 2 *(h1_x-h2_x), 2*(h1_y - h2_y), 0;
@@ -149,38 +91,16 @@ b = [
 
 x = pinv(A) * b;
 
-% omega = [
-%     x(1), 0, x(2);
-%     0, 1, x(3);
-%     0, 0, x(4)
-%     ];
-
-% omega = [
-%     x(1), 0, x(2);
-%     0, x(3), x(4);
-%     0, 0, 1
-%     ];
-
-% omega = [
-%     x(1), 0, x(2);
-%     0, 1, 0;
-%     0, 0, x(3)
-%     ];
-
-% omega = [
-%     x(1), 0, x(2);
-%     0, x(3), x(4);
-%     0, 0, 1
-%     ];
-
 omega = [
     x(1), 0, x(2);
     0, 1, x(3);
     x(2), x(3), x(4)
     ];
-% omega= omega/omega(3,3);
 
-% omega = omega/x(3);
+%% Check with IAC
+iac = get_IAC(l_h_inf_prime, v, h_intersection, m_intersection, H);
+omega = iac;
+
 
 disp('h1T Omega h2');
 disp(h1'*omega*h2);
@@ -242,10 +162,10 @@ quiver3(rs(1, 3), rs(2, 3), rs(3, 3), rs(1, 2), rs(2, 2), rs(3, 2), 0, 'LineWidt
 
 %Plot the plane of the span of the first 2 columns of rs
 % create a grid
-[X, Y] = meshgrid(0:1:l1_length, 0:1:0.35*l1_length);
+[X, Y] = meshgrid(0:1:l1_length, 0:1:0.35 * l1_length);
 
 grid_points = [X(:), Y(:)];
-grid_points_cart = rs(:, 1:2) * grid_points' + rs(:, 3);
+grid_points_cart = rs(:, 1:2)* grid_points' + rs(:, 3);
 X = reshape(grid_points_cart(1, :), size(X));
 Y = reshape(grid_points_cart(2, :), size(Y));
 Z = reshape(grid_points_cart(3, :), size(X));
@@ -268,8 +188,112 @@ xlabel('X');
 ylabel('Y');
 zlabel('Z');
 
+plot3(0, 0, 0, 'k+', 'LineWidth', 2);
+
 
 %% Compute the height h
 height = (1/l1_length - 1/l2_length) * vecnorm(rs(:, 3));
 disp('Height');
 disp(height);
+
+
+function IAC = get_IAC(l_infs, vps, vp1s, vp2s, H)
+%GET_IAC Returns the Image of the absolute conitc
+%   l_infs set of imaged line at inf
+%   vps set of vanishing points to be used with l_infs
+%   vp1s set of vanishing points orthogonal to the point in the
+%   corresponding pos in vp2
+%   H is the homography in order to estimate the position of circular
+%   points
+%   IAC is the image of the absolute conic
+% Assume w to have this form [a 0 b
+%                             0 1 c
+%                             b c d]
+
+% matrix parametrization
+syms a b c d;
+omega = [a 0 b; 0 1 c; b c d];
+
+X = []; % should be nxm matrix (n is ls size 2, m is 4)
+Y = []; % should be n matrix of target values
+
+% first add constraints on l_infs and vps
+% 2 constraints for each couple
+% [l_inf]x W vp = 0
+eqn = [];
+for ii = 1:size(l_infs,2)
+    
+    % first compute the element of l
+    li = l_infs(:,ii);
+    l1 = li(1,1);
+    l2 = li(2,1);
+    l3 = li(3,1);
+    
+    % vector product matrix
+    lx = [0 -l3 l2; l3 0 -l1; -l2 l1 0];
+    
+    % get vp
+    xi = vps(:,ii);
+    
+    eqn = [lx(1,:)*omega*xi == 0, lx(2,:)*omega*xi == 0];
+    
+end
+
+% cast equations into matrix form
+[A,y] = equationsToMatrix(eqn,[a,b,c,d]);
+% concatenate matrices
+X = [X;double(A)];
+Y = [Y;double(y)];
+
+% eqn contains all the equations
+eqn = [];
+% add constraints on vanishing points
+for ii = 1:size(vp1s,2)
+    % first compute the element of x
+    vi = vp1s(:,ii);
+    ui = vp2s(:,ii);
+    
+    % vp1' W vp2 = 0
+    eqn = [eqn, vi.' * omega * ui == 0];
+    
+end
+
+if size(eqn,2)>0
+    % cast equations into matrix form
+    [A,y] = equationsToMatrix(eqn,[a,b,c,d]);
+    % concatenate matrices
+    X = [X;double(A)];
+    Y = [Y;double(y)];
+end
+
+% add constraints on homography
+if size(H)>0
+    % scaling factor needed in order to get an homogeneous matrix
+    % get columns
+    h1 = H(:,1);
+    h2 = H(:,2);
+    
+    % first constraint: h1' w h2 = 0
+    eq1 = h1.' * omega * h2 == 0;
+    % second equation h1'wh1 = h2' w h2
+    eq2 = h1.' * omega * h1 == h2.' * omega * h2;
+    
+    [A,y] = equationsToMatrix([eq1,eq2],[a,b,c,d]);
+    A = double(A);
+    y = double(y);
+    
+    % concatenate matrices
+    X = [X;A];
+    Y = [Y;y];
+end
+
+% fit a linear model without intercept
+lm = fitlm(X,Y, 'y ~ x1 + x2 + x3 + x4 - 1');
+% get the coefficients
+W = lm.Coefficients.Estimate;
+
+%W = X.'*X \ (X.'*Y)
+% image of absolute conic
+IAC = double([W(1,1) 0 W(2,1); 0 1 W(3,1); W(2,1) W(3,1) W(4,1)]);
+
+end

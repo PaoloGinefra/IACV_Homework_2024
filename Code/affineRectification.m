@@ -78,7 +78,7 @@ H_metric_inv = inv(H_metric);
 
 %% Apply rotation to make l lines paralle to the x-axis
 l_lines_metric = warpLine(l_lines, H_metric_inv);
-
+l1_length = vecnorm(l_lines_metric(:, 1));
 angles = rad2deg(atan2(l_lines_metric(2, :), l_lines_metric(1, :)));
 avg_rotation = -mean(angles) + 90;
 R = [cosd(avg_rotation), -sind(avg_rotation); sind(avg_rotation), cosd(avg_rotation)];
