@@ -78,11 +78,16 @@ H_metric_inv = inv(H_metric);
 
 %% Apply rotation to make l lines paralle to the x-axis
 l_lines_metric = warpLine(l_lines, H_metric_inv);
-l1_length = vecnorm(l_lines_metric(:, 1));
+l_points_metric = warpPoint(l_points, H_metric);
+l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
 angles = rad2deg(atan2(l_lines_metric(2, :), l_lines_metric(1, :)));
 avg_rotation = -mean(angles) + 90;
 R = [cosd(avg_rotation), -sind(avg_rotation); sind(avg_rotation), cosd(avg_rotation)];
 H_rotation = [R, zeros(2, 1); 0, 0, 1];
+
+H_scaling = [1/l1_length, 0, 0;
+    0, 1/l1_length, 0;
+    0, 0, 1];
 
 H_metric = H_rotation * H_metric;
 H_metric_inv = inv(H_metric);
@@ -172,6 +177,28 @@ disp(depth_m);
 %% Save the matric rectification homography
 % H_metric = H_metric/l1_legnth;
 save('./H_metric.mat', 'H_metric', 'l1_length', "l2_length", 'l_points_metric', 'm_points_metric', 'depth_m');
+
+
+%% Pick 12 points on the curve S
+PICK_POINTS = false;
+n_points = 12;
+
+if PICK_POINTS
+    figure;
+    imshow(im_metric);
+    title(['Pick ' num2str(n_points) ' points on the curve S']);
+    hold on;
+    [x, y] = ginput(n_points);
+    S_points = [x, y];
+    plot(S_points(:, 1), S_points(:, 2), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+    % label points
+    for i = 1:n_points
+        text(S_points(i, 1), S_points(i, 2), ['S' num2str(i)], 'Color', 'r', 'FontSize', 11);
+    end
+    hold off;
+    save('./S_points.mat', 'S_points');
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       USEFUL FUNCTIONS                              %

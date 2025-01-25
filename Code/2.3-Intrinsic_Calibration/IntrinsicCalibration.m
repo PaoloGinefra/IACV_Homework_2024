@@ -140,10 +140,10 @@ disp(norm(omega_inv - omega_inv_K));
 disp('K');
 disp(K);
 
-%% Save the intrinsic matrix
-save('../K_metric.mat', 'K');
-
 rs = K\H;
+rs = rs / norm(rs(:, 1)) / l1_length;
+z_basis = cross(rs(:, 1), rs(:, 2));
+z_basis = z_basis / norm(z_basis);
 disp('Rs');
 disp(rs)
 
@@ -161,8 +161,8 @@ quiver3(rs(1, 3), rs(2, 3), rs(3, 3), rs(1, 1), rs(2, 1), rs(3, 1), 0, 'LineWidt
 quiver3(rs(1, 3), rs(2, 3), rs(3, 3), rs(1, 2), rs(2, 2), rs(3, 2), 0, 'LineWidth', 2);
 
 %Plot the plane of the span of the first 2 columns of rs
-% create a grid
-[X, Y] = meshgrid(0:1:l1_length, 0:1:0.35 * l1_length);
+%create a grid
+[X, Y] = meshgrid(0:l1_length / 100:l1_length, 0:l1_length/100:0.35 * l1_length);
 
 grid_points = [X(:), Y(:)];
 grid_points_cart = rs(:, 1:2)* grid_points' + rs(:, 3);
@@ -173,7 +173,10 @@ surf(X, Y, Z, 'FaceAlpha', 0.5, 'EdgeColor', 'none');
 
 %% Plot the lines
 world_l_points = rs(:, 1:2) * l_points_metric + rs(:, 3);
+world_l_points(:, 3:6) = world_l_points(:, 3:6) * l1_length/l2_length;
 plot3(world_l_points(1, 1:2), world_l_points(2, 1:2), world_l_points(3, 1:2), 'r', 'LineWidth', 2);
+plot3(world_l_points(1, 3:4), world_l_points(2, 3:4), world_l_points(3, 3:4), 'r', 'LineWidth', 2);
+plot3(world_l_points(1, 5:6), world_l_points(2, 5:6), world_l_points(3, 5:6), 'r', 'LineWidth', 2);
 
 world_m_points = rs(:, 1:2) * m_points_metric + rs(:, 3);
 plot3(world_m_points(1, 1:2), world_m_points(2, 1:2), world_m_points(3, 1:2), 'g', 'LineWidth', 2);
@@ -188,13 +191,91 @@ xlabel('X');
 ylabel('Y');
 zlabel('Z');
 
-plot3(0, 0, 0, 'k+', 'LineWidth', 2);
+% plot a camera at the origin
+plotCamera('Location', [0, 0, -0.2], 'Orientation', eye(3), 'Size', 0.1, 'Color', 'b');
+
+%% Save the intrinsic matrix
+save('../K_metric.mat', 'K', 'rs');
 
 
 %% Compute the height h
-height = (1/l1_length - 1/l2_length) * vecnorm(rs(:, 3));
+height = (1 - l1_length/l2_length) * rs(:, 3)' * z_basis;
 disp('Height');
 disp(height);
+
+%% Plot the S curve
+load('../S_points.mat');
+S_points_world = rs(:, 1:2) * S_points' + rs(:, 3);
+scaling = 1 - height / (2 * rs(:, 3)' * z_basis);
+
+S_points_world = S_points_world * scaling;
+
+plot3(S_points_world(1, :), S_points_world(2, :), S_points_world(3, :), 'b', 'LineWidth', 2);
+
+%% Move everything to the origin
+origin = world_l_points(:, 3);
+i_prime = rs(:, 1) / norm(rs(:, 1));
+j_prime = rs(:, 2) / norm(rs(:, 2));
+k_prime = z_basis;
+
+R_inv = [i_prime, j_prime, k_prime, origin;
+    0, 0, 0, 1];
+
+R = inv(R_inv);
+
+world_l_points = R * [world_l_points; ones(1, size(world_l_points, 2))];
+world_m_points = R * [world_m_points; ones(1, size(world_m_points, 2))];
+S_points_world = R * [S_points_world; ones(1, size(S_points_world, 2))];
+camera_pos = R * [0; 0; 0; 1];
+camera_direction = R * [0; 0; 1; 1];
+camera_direction = camera_direction / camera_direction(4);
+camera_direction = camera_direction - camera_pos;
+camera_direction = camera_direction / norm(camera_direction);
+camera_direction = camera_direction(1:3);
+camera_direction = camera_direction / norm(camera_direction);
+%Compute camera orientation from camera direction for the plot camera
+i_camera_direction = [camera_direction(2); -camera_direction(1); 0];
+i_camera_direction = i_camera_direction / norm(i_camera_direction);
+
+j_camera_direction = cross(camera_direction, i_camera_direction);
+cameraOrientation = inv([i_camera_direction, j_camera_direction, camera_direction]);
+
+
+figure;
+plot3(world_l_points(1, 1:2), world_l_points(2, 1:2), world_l_points(3, 1:2), 'r', 'LineWidth', 2);
+hold on;
+plot3(world_l_points(1, 3:4), world_l_points(2, 3:4), world_l_points(3, 3:4), 'r', 'LineWidth', 2);
+plot3(world_l_points(1, 5:6), world_l_points(2, 5:6), world_l_points(3, 5:6), 'r', 'LineWidth', 2);
+
+plot3(world_m_points(1, 1:2), world_m_points(2, 1:2), world_m_points(3, 1:2), 'g', 'LineWidth', 2);
+plot3(world_m_points(1, 3:4), world_m_points(2, 3:4), world_m_points(3, 3:4), 'g', 'LineWidth', 2);
+plot3(world_m_points(1, 5:6), world_m_points(2, 5:6), world_m_points(3, 5:6), 'g', 'LineWidth', 2);
+plot3(world_m_points(1, 7:8), world_m_points(2, 7:8), world_m_points(3, 7:8), 'g', 'LineWidth', 2);
+
+plot3(S_points_world(1, :), S_points_world(2, :), S_points_world(3, :), 'b', 'LineWidth', 2);
+
+% axis of same scale
+axis equal;
+
+% grid on
+grid on;
+
+% add axis labels
+xlabel('X');
+ylabel('Y');
+zlabel('Z');
+
+% plot camera noraml
+camera_direction = camera_direction * 0.2;
+quiver3(camera_pos(1), camera_pos(2), camera_pos(3), camera_direction(1), camera_direction(2), camera_direction(3), 0, 'LineWidth', 2);
+%plot i_camera_direction
+i_camera_direction = i_camera_direction * 0.2;
+quiver3(camera_pos(1), camera_pos(2), camera_pos(3), i_camera_direction(1), i_camera_direction(2), i_camera_direction(3), 0, 'LineWidth', 2);
+%plot j_camera_direction
+j_camera_direction = j_camera_direction * 0.2;
+quiver3(camera_pos(1), camera_pos(2), camera_pos(3), j_camera_direction(1), j_camera_direction(2), j_camera_direction(3), 0, 'LineWidth', 2);
+% plot a camera at the origin
+cam = plotCamera('Location', camera_pos(1:3), 'Orientation', cameraOrientation, 'Size', 0.1, 'Color', 'b');
 
 
 function IAC = get_IAC(l_infs, vps, vp1s, vp2s, H)
