@@ -31,17 +31,17 @@ im = imread('../../Assignment/Homework Image.jpg');
 %% Load the lines
 load('../2.0-ManualLineExtraction/lines.mat');
 
-%%Find the intersection of the l lines
+%% Find the intersection of the l lines
 [~, ~, V] = svd(l_lines');
 l_intersection = V(:, end);
 l_intersection_euclidian = l_intersection(1:2) / l_intersection(3);
 
-%%Find the intersection of the m lines
+%% Find the intersection of the m lines
 [~, ~, V] = svd(m_lines');
 m_intersection = V(:, end);
 m_intersection_euclidian = m_intersection(1:2) / m_intersection(3);
 
-%%Plot the j and m lines
+%% Plot the j and m lines
 figure;
 imshow(im);
 hold on;
@@ -53,14 +53,14 @@ for i = 1:size(m_lines, 2)
     line(m_points(1, 2*i-1:2*i), m_points(2, 2*i-1:2*i), 'Color', 'g', 'LineWidth', 2);
 end
 
-%%Plot the intersection points
+%% Plot the intersection points
 plot(l_intersection_euclidian(1), l_intersection_euclidian(2), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
 plot(m_intersection_euclidian(1), m_intersection_euclidian(2), 'gx', 'MarkerSize', 10, 'LineWidth', 2);
 
-%%Calculate the vanishing line
+%% Calculate the vanishing line
 l_h_inf_prime = cross(l_intersection, m_intersection);
 
-%%Plot the vanishing line
+%% Plot the vanishing line
 x_min =  min(1, min(m_intersection_euclidian(1), l_intersection_euclidian(1)));
 x_max = max(size(im, 2), max(m_intersection_euclidian(2), l_intersection_euclidian(2)));
 x = x_min:x_max;
