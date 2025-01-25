@@ -10,8 +10,15 @@
 % The vanishing line is saved in a .mat file in the following format:
 % - l_h_inf_prime: the vanishing line of the horizontal plane in homogeneous coordinates.
 %
+%This script also saves the vanishing points of the lines in a .mat file in the following format:
+% - l_intersection: the vanishing point of the "l" lines in homogeneous coordinates.
+% - m_intersection: the vanishing point of the "m" lines in homogeneous coordinates.
+%
 % To load the vanishing line, you can use the following code:
 % load('pathToMat/vanishingLineHorizontalPlane.mat');
+%
+% To load the vanishing points, you can use the following code:
+% load('pathToMat/vanishingPoints.mat');
 
 
 close all;
@@ -19,10 +26,10 @@ clc;
 clear;
 
 %% Load the image
-im = imread('../Assignment/Homework Image.jpg');
+im = imread('../../Assignment/Homework Image.jpg');
 
 %% Load the lines
-load('lines.mat');
+load('../2.0-ManualLineExtraction/lines.mat');
 
 %%Find the intersection of the l lines
 [~, ~, V] = svd(l_lines');
