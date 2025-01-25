@@ -16,7 +16,7 @@ clc;
 clear;
 
 %% Load the image
-im = imread('../Assignment/Homework Image.jpg');
+im = imread('../../Assignment/Homework Image.jpg');
 
 %% show the image
 figure;
@@ -24,12 +24,12 @@ imshow(im);
 title('Original Image');
 
 %% get m lines using the draw line function
-[h_points, h_lines] = drawLines('h', 4);
-[m_points, m_lines] = drawLines('m', 4);
 [l_points, l_lines] = drawLines('l', 3);
+[m_points, m_lines] = drawLines('m', 4);
+[h_points, h_lines] = drawLines('h', 4);
 
-save('lines.mat', 'h_points', 'h_lines', 'm_points', 'm_lines', 'l_points', 'l_lines');
-load(lines.mat);
+save('./lines.mat', 'h_points', 'h_lines', 'm_points', 'm_lines', 'l_points', 'l_lines');
+load('lines.mat');
 
 function [points, lines] = drawLines(name, n_lines)
 points = nan(2, 2 * n_lines);
