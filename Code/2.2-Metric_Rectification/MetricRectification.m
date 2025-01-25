@@ -3,26 +3,32 @@ clc;
 clear;
 
 %% Load the image
-im = imread('../Assignment/Homework Image.jpg');
+im = imread('../../Assignment/Homework Image.jpg');
 
-%% Load the lines for visualization purposes
-load('./lines.mat');
+%% Load the lines
+% Loads: l_points, l_lines, m_points, m_lines, h_points, h_lines
+load('../2.0-ManualLineExtraction/lines.mat');
 
 %% load the line at infinity
-load('./VanishingLineHorizontalPlane.mat');
+% Loads: l_h_inf_prime
+load('../2.1-Vanishing_Line_Extraction/VanishingLineHorizontalPlane.mat');
 
-%% load conic
-% load('./CircleC.mat');
-load('./1-FeatureExtraction/ConicExtraction/ExtractedConic.mat');
+%% Load the extracted conic
+load('../1-FeatureExtraction/ConicExtraction/ExtractedConic.mat');
 
-%% Compute the homography for affine rectification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           Affine Rectification                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Compute the homography for the affine rectification
 l_h_inf_prime = l_h_inf_prime / l_h_inf_prime(3);
+
+% Added a scaling factor of 0.1 to make the rectified image more managable
 H_aff = [.1, 0, 0; 0, .1, 0; l_h_inf_prime'];
 H_aff_inv = inv(H_aff);
 
 %% Sanity check the homography
-fprintf('Sanity Check [Affine Rectification]\nline at infinity after homography:');
-disp(warpLine(l_h_inf_prime, H_aff_inv)');
+assert(all(abs(warpLine(l_h_inf_prime, H_aff_inv)' - [0, 0, 1]) < 1e-6));
+disp('Sanity Check [Affine Rectification] - Line at infinity after homography is at infinity: ✅');
 
 %% Apply the homography to the image
 im_warped = warpImage(im, H_aff);
@@ -36,19 +42,14 @@ l_lines_aff = warpLine(l_lines, H_aff_inv);
 l_lines_aff = l_lines_aff ./ l_lines_aff(3, :);
 l_points_aff = warpPoint(l_points, H_aff);
 
-% Sanity check: parallel lines
-disp('Sanity Check [Affine Rectification]');
-disp('Parallel lines after affine rectification');
+%% Sanity check: parallel lines
 m_lines_aff_angles = rad2deg(atan2(m_lines_aff(2, :), m_lines_aff(1, :)));
 l_lines_aff_angles = rad2deg(atan2(l_lines_aff(2, :), l_lines_aff(1, :)));
+assert(all(abs(m_lines_aff_angles - [m_lines_aff_angles(2:end), m_lines_aff_angles(1)]) < 1));
+assert(all(abs(l_lines_aff_angles - [l_lines_aff_angles(2:end), l_lines_aff_angles(1)]) < 1));
+disp('Sanity Check [Affine Rectification] - Parallel lines after affine rectification have the same direction up to 1 deg: ✅');
 
-disp('Angles of the m lines after affine rectification in degrees');
-disp(m_lines_aff_angles);
-
-disp('Angles of the l lines after affine rectification in degrees');
-disp(l_lines_aff_angles);
-
-% Compute conic Errors
+%% Compute conic Errors
 conicErrors = computeConicErrors(C, im);
 [center, axes, angle] = paramsFromHomogenousConic_separated(C);
 
@@ -59,36 +60,40 @@ C_aff_par = paramsFromHomogenousConic(C_aff);
 %% Compute the conic errors after the affine rectification
 C_aff_errors = computeConicErrors(C_aff, im_warped);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           Metric rectification                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% convert the conic coefficient to geometric parameters
 [center_aff, axes_aff, angle_aff] = paramsFromHomogenousConic_separated(C_aff);
 
-%% Metric rectification
 % Rotation
 U = [cos(angle_aff), -sin(angle_aff); sin(angle_aff), cos(angle_aff);];
 
-% rescaling the axis to make them equal
+% Rescaling the axis to make them equal
 a = axes_aff(1);
 b = axes_aff(2);
 S = diag([1, a/b]);
 K = U*S*U';
 H_2 = [K, zeros(2, 1); 0, 0, 1];
 
+% Compute the metric rectification homography
 H_metric = H_2 * H_aff;
 H_metric_inv = inv(H_metric);
 
 %% Apply rotation to make l lines paralle to the x-axis
+% Compute the warped lines
 l_lines_metric = warpLine(l_lines, H_metric_inv);
-l_points_metric = warpPoint(l_points, H_metric);
-l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
+
+% Compute the average angle of the lines
 angles = rad2deg(atan2(l_lines_metric(2, :), l_lines_metric(1, :)));
 avg_rotation = -mean(angles) + 90;
+
+% Compute the rotation matrix
 R = [cosd(avg_rotation), -sind(avg_rotation); sind(avg_rotation), cosd(avg_rotation)];
 H_rotation = [R, zeros(2, 1); 0, 0, 1];
 
-H_scaling = [1/l1_length, 0, 0;
-    0, 1/l1_length, 0;
-    0, 0, 1];
-
+% Apply the rotation to the homography
 H_metric = H_rotation * H_metric;
 H_metric_inv = inv(H_metric);
 
@@ -112,12 +117,26 @@ l_lines_metric = l_lines_metric ./ l_lines_metric(3, :);
 l_points_metric = warpPoint(l_points, H_metric);
 
 %% Sanity check: othogonality of rectified lines
-disp('Sanity Check [Metric Rectification]: Orthogonality of rectified lines');
-disp(m_lines_metric(1:2, :)' * l_lines_metric(1:2, :));
+assert(all(norm(m_lines_metric(1:2, :)' * l_lines_metric(1:2, :)) < 1e-3));
+disp('Sanity Check [Metric Rectification] - The rectified lines are orthogonal: ✅');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                  Depth                                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Compute depth m using the length of l1 and the average length of the m lines
+m_lines_length = vecnorm(m_points_metric(:, 1:2:end) - m_points_metric(:, 2:2:end));
 
+l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
+l2_length = vecnorm(l_points_metric(:, 3) - l_points_metric(:, 4));
 
-%% Show the images
+average_m_length = mean(m_lines_length);
+depth_m = average_m_length / l1_length;
+
+disp(['Depth of m: ' num2str(depth_m)]);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                 Plotting                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure;
 subplot(2, 3, 1);
 imshow(im);
@@ -164,15 +183,6 @@ contour(C_metric_errors, [0, 0], 'b', 'LineWidth', 2);
 plotConicParams(center_metric, axes_metric, angle_metric, 'b');
 title('Metric Rectification + lines + conic');
 
-%% Compute depth m
-m_lines_length = vecnorm(m_points_metric(:, 1:2:end) - m_points_metric(:, 2:2:end));
-l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
-l2_length = vecnorm(l_points_metric(:, 3) - l_points_metric(:, 4));
-average_m_length = mean(m_lines_length);
-depth_m = average_m_length / l1_length;
-
-disp('Depth of m');
-disp(depth_m);
 
 %% Save the matric rectification homography
 % H_metric = H_metric/l1_legnth;
@@ -233,41 +243,8 @@ corners =  [
 
 corners_warped = warpPoint(corners, H);
 
-disp('corners_warped');
-disp(corners_warped);
-
-% plot the corners
-figure;
-imshow(image);
-hold on;
-plot(corners(1, :), corners(2, :), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
-for i = 1:4
-    text(corners(1, i), corners(2, i), [num2str(i) ' - (' num2str(corners(1, i)) ', ' num2str(corners(2, i)) ')'], 'Color', 'r', 'FontSize', 11);
-end
-plot(corners_warped(1, :), corners_warped(2, :), 'bx', 'MarkerSize', 10, 'LineWidth', 2);
-for i = 1:4
-    text(corners_warped(1, i), corners_warped(2, i), [num2str(i) '-(' num2str(corners_warped(1, i)) ', ' num2str(corners_warped(2, i)) ')'], 'Color', 'b', 'FontSize', 11);
-end
-
-% Plot a bounding box for the warped corners
-max_x = max(corners_warped(1, :));
-min_x = min(corners_warped(1, :));
-max_y = max(corners_warped(2, :));
-min_y = min(corners_warped(2, :));
-
-line([min_x, min_x], [min_y, max_y], 'Color', 'g', 'LineWidth', 2);
-line([max_x, max_x], [min_y, max_y], 'Color', 'g', 'LineWidth', 2);
-line([min_x, max_x], [min_y, min_y], 'Color', 'g', 'LineWidth', 2);
-line([min_x, max_x], [max_y, max_y], 'Color', 'g', 'LineWidth', 2);
-hold off;
-
-
 h_warped = ceil(max(corners_warped(2, :)) - min(corners_warped(2, :)));
 w_warped = ceil(max(corners_warped(1, :)) - min(corners_warped(1, :)));
-disp('w_warped');
-disp(w_warped);
-disp('h_warped');
-disp(h_warped);
 
 imageWarped = zeros(h_warped, w_warped, 3, 'uint8');
 
