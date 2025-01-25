@@ -6,119 +6,59 @@ clear;
 im = imread('../../Assignment/Homework Image.jpg');
 
 %% Load the lines for visualization purposes
-load('../lines.mat');
+load('../2.0-ManualLineExtraction/lines.mat');
 
 %% load the line at infinity
-load('../VanishingLineHorizontalPlane.mat');
+load('../2.1-Vanishing_Line_Extraction/VanishingLineHorizontalPlane.mat');
 
 %% Load the vanishing points
-load('../vanishingPoints.mat');
+load('../2.1-Vanishing_Line_Extraction/vanishingPoints.mat');
 
 %% load conic
 % load('./CircleC.mat');
 load('../1-FeatureExtraction/ConicExtraction/ExtractedConic.mat');
 
 %% Load the metric rectification homography
-load('../H_metric.mat');
+load('../2.2-Metric_Rectification/H_metric.mat');
 
 %% Compute the vanishing point ortogonal to the rectified face
-%%Find the intersection of the h lines
+%% Find the intersection of the h lines
 [~, ~, V] = svd(h_lines');
 h_intersection = V(:, end);
 h_intersection = h_intersection / h_intersection(3);
-h_intersection_euclidian = h_intersection(1:2);
-
-l_v = l_intersection / l_intersection(3);
-l_v_x = l_v(1);
-l_v_y = l_v(2);
-l_v_w = l_v(3);
-
-m_v = m_intersection / m_intersection(3);
-m_v_x = m_v(1);
-m_v_y = m_v(2);
-m_v_w = m_v(3);
 
 v = h_intersection/h_intersection(3);
-v_x = v(1);
-v_y = v(2);
-v_w = v(3);
 
 H = inv(H_metric);
-h1 = H(:, 1) / H(3, 1);
-h2 = H(:, 2) / H(3, 2);
-h1_x = h1(1);
-h1_y = h1(2);
-h1_w = h1(3);
-h2_x = h2(1);
-h2_y = h2(2);
-h2_w = h2(3);
 
-%% Plot the image
-figure;
-imshow(im);
-hold on;
-for i = 1:size(h_lines, 2)
-    line(h_points(1, 2*i-1:2*i), h_points(2, 2*i-1:2*i), 'Color', 'b', 'LineWidth', 2);
-end
+%% Compute the omega matrix
+omega = get_IAC(l_h_inf_prime, v, h_intersection, m_intersection, H);
 
+%% Sanity checks
+assert(norm(omega - omega') < 1e-10);
+disp('Sanity check[Omega] - Omega is symmetric: ✅');
 
-% plot h1 and h2
-plot([h1_x, h2_x], [h1_y, h2_y], 'r', 'LineWidth', 2);
-% plot the vanishing point
-plot(v_x, v_y, 'bx', 'MarkerSize', 10, 'LineWidth', 2);
-%plot m_v and l_v
-plot(l_v_x, l_v_y, 'gx', 'MarkerSize', 10, 'LineWidth', 2);
-plot(m_v_x, m_v_y, 'gx', 'MarkerSize', 10, 'LineWidth', 2);
+h1 = H(:, 1);
+h2 = H(:, 2);
 
-l_h_inf_prime = l_h_inf_prime / l_h_inf_prime(3);
-l_h_inf_prime_x = l_h_inf_prime(1);
-l_h_inf_prime_y = l_h_inf_prime(2);
-l_h_inf_prime_w = l_h_inf_prime(3);
+assert(abs(h1'*omega*h2) < 1e-10);
+disp('Sanity check[Omega] - h1T Omega h2 = 0: ✅');
 
-A = [
-    h1_x * h2_x, h1_x + h2_x, h1_y+h2_y, 1;
-    h1_x^2 - h2_x^2, 2 *(h1_x-h2_x), 2*(h1_y - h2_y), 0;
-    v_x * h1_x, v_x+h1_x, v_y+h1_y, 1;
-    v_x * h2_x, v_x+h2_x, v_y+h2_y, 1;
-    ];
+assert(abs(h1'*omega*h1 - h2'*omega*h2) < 1e-10);
+disp('Sanity check[Omega] - h1T Omega h1 = h2T Omega h2: ✅');
 
-b = [
-    -h1_y*h2_y;
-    -h1_y^2 + h2_y^2;
-    -v_y*h1_y;
-    -v_y*h2_y;
-    ];
+% disp(v'*omega*h1);
+assert(abs(v'*omega*h1) < 1e-10);
+disp('Sanity check[Omega] - vT Omega h1 = 0: ✅');
 
-x = pinv(A) * b;
+% disp(v'*omega*h2);
+assert(abs(v'*omega*h2) < 1e-10);
+disp('Sanity check[Omega] - vT Omega h2 = 0: ✅');
 
-omega = [
-    x(1), 0, x(2);
-    0, 1, x(3);
-    x(2), x(3), x(4)
-    ];
+assert(all(eigs(omega) > 0));
+disp('Sanity check[Omega] - Omega is positive definite: ✅');
 
-%% Check with IAC
-iac = get_IAC(l_h_inf_prime, v, h_intersection, m_intersection, H);
-omega = iac;
-
-
-disp('h1T Omega h2');
-disp(h1'*omega*h2);
-
-disp('h1T Omega h1 - h2T Omega h2');
-disp(h1'*omega*h1 - h2'*omega*h2);
-
-disp('vT Omega h1');
-disp(v'*omega*h1);
-
-disp('vT Omega h2');
-disp(v'*omega*h2);
-
-disp('Eigs of Omega');
-disp(eig(omega));
-
-%% Compute K using the cholesky decomposition of omega inverse
-
+%% Compute K from omega
 alfa = sqrt(omega(1,1));
 u0 = -omega(1,3)/(alfa^2);
 v0 = -omega(2,3);
@@ -128,27 +68,30 @@ fx = fy / alfa;
 % build K using the parametrization
 K = [fx 0 u0; 0 fy v0; 0 0 1];
 
-disp('Sanity Check [K]: omega^-1 = KK^T');
+%% Sanity checks
 omega_inv = inv(omega);
 omega_inv = omega_inv/omega_inv(3,3);
 omega_inv_K = K*K';
-disp(norm(omega_inv - omega_inv_K));
-% omega_inv = inv(omega);
+assert(norm(omega_inv - omega_inv_K) < 1e-9);
+disp('Sanity Check [K]: omega^-1 = KK^T: ✅');
 
-% K = chol(omega_inv, 'lower');
+%% Sanity check on K: compute the basis and offset of the rectified plane and check the orthogonality of the basis
+% Compute the basis and offset of the rectified plane
+rs = K\H;
+% Scale the basis so as to use the metric coordinates of the plane containg l1 (The upper face of the parallelepiped)
+rs = rs / norm(rs(:, 1)) / l1_length;
+r3 = cross(rs(:, 1), rs(:, 2));
+r3 = r3 / norm(r3);
 
-disp('K');
+assert(abs(rs(:,1)'*rs(:,2)/(norm(rs(:,1))*norm(rs(:,2)))) < 1e-10);
+disp('Sanity Check [K]: Orthogonality of the basis of the rectified plane (r1 ⊥ r2): ✅');
+
+%% Print K
+disp('K:');
 disp(K);
 
-rs = K\H;
-rs = rs / norm(rs(:, 1)) / l1_length;
-z_basis = cross(rs(:, 1), rs(:, 2));
-z_basis = z_basis / norm(z_basis);
-disp('Rs');
-disp(rs)
-
-disp('Sanity Check [K]: Orthogonality of world coordinate axes');
-disp(rs(:,1)'*rs(:,2)/(norm(rs(:,1))*norm(rs(:,2))));
+%% Save the intrinsic matrix
+save('./K.mat', 'K', 'rs', 'r3');
 
 %% make a 3d plot of colums of rs
 figure;
@@ -194,19 +137,16 @@ zlabel('Z');
 % plot a camera at the origin
 plotCamera('Location', [0, 0, -0.2], 'Orientation', eye(3), 'Size', 0.1, 'Color', 'b');
 
-%% Save the intrinsic matrix
-save('../K_metric.mat', 'K', 'rs');
-
 
 %% Compute the height h
-height = (1 - l1_length/l2_length) * rs(:, 3)' * z_basis;
+height = (1 - l1_length/l2_length) * rs(:, 3)' * r3;
 disp('Height');
 disp(height);
 
 %% Plot the S curve
 load('../S_points.mat');
 S_points_world = rs(:, 1:2) * S_points' + rs(:, 3);
-scaling = 1 - height / (2 * rs(:, 3)' * z_basis);
+scaling = 1 - height / (2 * rs(:, 3)' * r3);
 
 S_points_world = S_points_world * scaling;
 
@@ -216,7 +156,7 @@ plot3(S_points_world(1, :), S_points_world(2, :), S_points_world(3, :), 'b', 'Li
 origin = world_l_points(:, 3);
 i_prime = rs(:, 1) / norm(rs(:, 1));
 j_prime = rs(:, 2) / norm(rs(:, 2));
-k_prime = z_basis;
+k_prime = r3;
 
 R_inv = [i_prime, j_prime, k_prime, origin;
     0, 0, 0, 1];
