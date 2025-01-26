@@ -1,2 +1,21 @@
 \chapter{Feature Extraction}
 \label{ch:Feature Extraction}
+
+\section{Conic Extraction}
+In order to extract the conic $C$:
+\begin{enumerate}
+    \item Cropping the image to the desired portion
+    \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{}
+    \caption{\label{fig:Vanishing Line}The Extracted image of the vanishing line}
+    \end{figure}
+
+    \item Convert to grayscale
+
+    \item Canny edge detection ($\sigma = 2$, threshold = $[0, 0.15]$)
+
+    \item Remove edges that are too crowded, like the holes of the colander. To do that, first heavily blur the image ($\sigma = 10$) then threshold the image to select the sparser areas ($\leq 0.1$). Use this to mask the edges
+
+    \item Extract the remaining points $\neq 0$ and use a slightly modified RANSAC to extract the Conic with the most inliers 
+\end{enumerate}
