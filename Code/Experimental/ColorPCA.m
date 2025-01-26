@@ -106,7 +106,7 @@ impixelinfo;
 colormap(gray);
 
 % Canny edge detection on first principal component
-threshold = [0.0, 0.1];
+threshold = [0.0, 0.08];
 sigma = 1.5;
 im_edges = edge(reshape(features_pca(1, :), size(im, 1), size(im, 2)), 'canny', threshold, sigma);
 
