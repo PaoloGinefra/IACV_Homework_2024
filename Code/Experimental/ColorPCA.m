@@ -6,7 +6,7 @@ clear;
 im = imread('../../Assignment/Homework Image.jpg');
 
 crop_top = 220;
-crop_bottom = 823;
+crop_bottom = 800;
 crop_left = 285;
 crop_right = 1462;
 im = im(crop_top+1:crop_bottom, crop_left+1:crop_right, :);
@@ -109,6 +109,54 @@ title('Third Principal Component');
 impixelinfo;
 %set gray colormap
 colormap(gray);
+
+% Canny edge detection on first principal component
+threshold = [0.0, 0.1];
+sigma = 1.5;
+im_edges = edge(reshape(features_pca(1, :), size(im, 1), size(im, 2)), 'canny', threshold, sigma);
+
+% Plot the edges
+figure;
+imshow(im_edges);
+title('Canny Edges on First Principal Component');
+
+% blur the edges
+sigma = 20;
+im_edges_blurred = imgaussfilt(double(im_edges), sigma);
+
+figure;
+imagesc(im_edges_blurred);
+title('Blurred Edges');
+
+% threshold the edges
+threshold = 0.1;
+im_edges_mask_pure = im_edges_blurred < threshold;
+
+figure;
+imagesc(im_edges_mask_pure);
+title('Thresholded Edges');
+
+% mask the edges
+im_edges = im_edges_mask_pure .* im_edges;
+
+figure;
+imshow(im_edges);
+title('Masked Edges');
+
+% apply hough transform
+[H, theta, rho] = hough(im_edges);
+peaks = houghpeaks(H, 50, "Threshold", 0.3 * max(H(:)), "NHoodSize", [21, 21]);
+lines = houghlines(im_edges, theta, rho, peaks, "FillGap", 150, "MinLength", 100);
+
+% Plot the lines
+figure;
+imshow(im_edges);
+hold on;
+for i = 1:length(lines)
+    xy = [lines(i).point1; lines(i).point2];
+    plot(xy(:, 1), xy(:, 2), 'LineWidth', 2, 'Color', 'red');
+end
+title('Hough Transform Lines');
 
 % Mask
 threshold_upper = 0;
