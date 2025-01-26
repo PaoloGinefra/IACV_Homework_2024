@@ -31,12 +31,12 @@ S_points = S_points ./ S_points(3, :);
 S_points_world = rs * S_points;
 scaling = 1 - height / (2 * rs(:, 3)' * r3);
 S_points_world = S_points_world * scaling;
-S_coordinates_ = [rs(:, 1)' / norm(rs(:, 1)); rs(:, 2)' / norm(rs(:, 2))] * (S_points_world - origin);
+S_coordinates_ =  [rs(:, 1)' / norm(rs(:, 1)); rs(:, 2)' / norm(rs(:, 2))] * (S_points_world- origin);
 
 %Plot the coordinates
 S_color = "#8C8608";
 hold on;
-plot(S_coordinates_(1, :), S_coordinates_(2,:), 'Color', S_color, 'LineWidth', 2);
+plot(S_coordinates_(1, :), S_coordinates_(2,:), 'Color', S_color, 'Marker', 'x', 'LineWidth', 2);
 text(S_coordinates_(1, 1), S_coordinates_(2, 1) + 0.05, 'S', 'Color', S_color, 'FontSize', 12, 'FontWeight', 'bold');
 plot(0, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
 text(0, 0 + 0.02, 'Origin', 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
