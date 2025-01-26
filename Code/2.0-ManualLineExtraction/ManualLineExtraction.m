@@ -5,7 +5,7 @@
 
 % The lines drawn are:
 % - 4 x "h" lines
-% - 4 x "m" lines
+% - 6 x "m" lines
 % - 3 x "l" lines
 
 % To load the lines, you can use the following code:
@@ -25,7 +25,7 @@ title('Original Image');
 
 %% get m lines using the draw line function
 [l_points, l_lines] = drawLines('l', 3);
-[m_points, m_lines] = drawLines('m', 4);
+[m_points, m_lines] = drawLines('m', 6);
 [h_points, h_lines] = drawLines('h', 4);
 
 save('./lines.mat', 'h_points', 'h_lines', 'm_points', 'm_lines', 'l_points', 'l_lines');
