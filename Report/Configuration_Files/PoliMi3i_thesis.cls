@@ -14,8 +14,8 @@
 %--------------------------------------------------------------------------
 %	HANDLING THE STYLE OF THE THESIS
 %--------------------------------------------------------------------------
-\LoadClass[12pt, twoside]{book} % 12 pt font, two-sided book style
-\RequirePackage[a4paper, includehead, headheight=0.6cm, inner=3.0cm ,outer=2.0cm, top=2.5cm, bottom=2.5cm]{geometry}
+\LoadClass[12pt, oneside]{book} % 12 pt font, two-sided book style
+\RequirePackage[a4paper, includehead, headheight=0.6cm, margin=2cm]{geometry}
 
 \RequirePackage[bf, font=onehalfspacing]{caption} % caption: FIG in bold, 1.5 line spacing in figure and table captions
 \newcommand{\thesisspacing}{\onehalfspacing}
@@ -120,6 +120,9 @@
 			{\color{bluepoli} \bfseries \large{\textsc{Report for the "Image Analysis and Computer Vision" homework}}\par}
 			\vspace{1.5 cm}
 			{\color{black} \Large {Author:} \bfseries{\name}}
+            		\\
+                    \\
+                    {\color{black} \Large {GitHub Repository:} \bfseries{\href{https://github.com/PaoloGinefra/IACV_Homework_2024}{PaoloGinefra/IACV\_Homework\_2024}}}
 			\end{minipage}
 			\\
 			\vspace*{\fill}
