@@ -3,7 +3,7 @@ clc;
 clear;
 
 %% Load Image
-im = imread('../../Assignment/Homework Image.jpg');
+im = imread('../../../Assignment/Homework Image.jpg');
 
 crop_top = 220;
 crop_bottom = 800;
@@ -14,6 +14,9 @@ im = im(crop_top+1:crop_bottom, crop_left+1:crop_right, :);
 figure;
 imshow(im);
 impixelinfo;
+
+%save the plot for the report
+saveas(gcf, 'CroppedImage.png');
 
 %% Convert to hsv
 im_hsv = rgb2hsv(im);
@@ -42,21 +45,33 @@ imagesc(covariance_matrix);
 title('Covariance Matrix');
 colorbar();
 
+% Save the plot for the report
+saveas(gcf, 'CovarianceMatrix.png');
+
 % Perform SVD
 [U, S, V] = svd(features_centered, "econ");
 
 % Plot the singular values
 figure;
-subplot(1, 3, 1);
+subplot(3, 1, 1);
 semilogy(diag(S));
+title('Singular Values');
+grid on;
 
 % Plot the cumulative sum of singular values
-subplot(1, 3, 2);
+subplot(3, 1, 2);
 plot(cumsum(diag(S))/sum(diag(S)));
+title('Cumulative Sum of Singular Values');
+grid on;
 
 % Plot the explained variance
-subplot(1, 3, 3);
+subplot(3, 1, 3);
 plot(cumsum(power(diag(S), 2))/sum(power(diag(S), 2)));
+title('Explained Variance');
+grid on;
+
+% Save the plot for the report
+saveas(gcf, 'SingularValues.png');
 
 % Project the features onto the principal components
 num_components = 3;
@@ -69,6 +84,10 @@ title('PCA Features');
 xlabel('Principal Component 1');
 ylabel('Principal Component 2');
 
+% Save the plot for the report
+saveas(gcf, 'PCAFeatures.png');
+
+
 % Plot the PCA features in 3d, coloring using the original features
 figure;
 scatter3(features_pca(1, :), features_pca(2, :), features_pca(3, :), 2, RGB_features', 'filled');
@@ -76,6 +95,9 @@ title('PCA Features');
 xlabel('Principal Component 1');
 ylabel('Principal Component 2');
 zlabel('Principal Component 3');
+
+% Save the plot for the report
+saveas(gcf, 'PCAFeatures3D.png');
 
 % Plot the image in the first principal component
 figure;
@@ -105,6 +127,9 @@ impixelinfo;
 %set gray colormap
 colormap(gray);
 
+% Save the plot for the report
+saveas(gcf, 'PrincipalComponents.png');
+
 % Canny edge detection on first principal component
 threshold = [0.0, 0.08];
 sigma = 1.5;
@@ -114,6 +139,9 @@ im_edges = edge(reshape(features_pca(1, :), size(im, 1), size(im, 2)), 'canny', 
 figure;
 imshow(im_edges);
 title('Canny Edges on First Principal Component');
+
+% Save the plot for the report
+saveas(gcf, 'CannyEdges.png');
 
 % blur the edges
 sigma = 20;
@@ -142,9 +170,12 @@ imshow(im_edges);
 axis equal;
 title('Masked Edges');
 
+% Save the plot for the report
+saveas(gcf, 'MaskedEdges.png');
+
 % apply hough transform
-[H, theta, rho] = hough(im_edges, "Theta", -90:1:89.9, "RhoResolution", 6);
-peaks = houghpeaks(H, 50, "Threshold", 0.3 * max(H(:)), "NHoodSize", [11, 11]);
+[H, theta, rho] = hough(im_edges, "Theta", -90:1.2:89.9, "RhoResolution", 7);
+peaks = houghpeaks(H, 50, "Threshold", 0.2 * max(H(:)), "NHoodSize", [7, 25]);
 lines = houghlines(im_edges, theta, rho, peaks, "FillGap", 50, "MinLength", 150);
 
 % Plot the lines
@@ -156,5 +187,8 @@ for i = 1:length(lines)
     plot(xy(:, 1), xy(:, 2), 'LineWidth', 2, 'Color', 'red');
 end
 title('Hough Transform Lines');
+
+% Save the plot for the report
+saveas(gcf, 'HoughLines.png');
 
 
