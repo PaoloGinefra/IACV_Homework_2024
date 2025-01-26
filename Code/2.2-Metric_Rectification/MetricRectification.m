@@ -16,6 +16,9 @@ load('../2.1-Vanishing_Line_Extraction/VanishingLineHorizontalPlane.mat');
 %% Load the extracted conic
 load('../1-FeatureExtraction/ConicExtraction/ExtractedConic.mat');
 
+%% Load The curve S points
+load('../2.0-ManualLineExtraction/S_points.mat');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Affine Rectification                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,6 +66,9 @@ C_aff_par = paramsFromHomogenousConic(C_aff);
 
 %% Compute the conic errors after the affine rectification
 C_aff_errors = computeConicErrors(C_aff, im_warped);
+
+%% Compute the S points in the affine rectified image
+S_points_aff = warpPoint(S_points_image, H_aff);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Metric rectification                           %
@@ -127,6 +133,9 @@ l_lines_metric = warpLine(l_lines, H_metric_inv);
 l_lines_metric = l_lines_metric ./ l_lines_metric(3, :);
 l_points_metric = warpPoint(l_points, H_metric);
 
+%% Compute the S points in the metric rectified image
+S_points_metric = warpPoint(S_points_image, H_metric);
+
 %% Sanity check: othogonality of rectified lines
 assert(all(norm(m_lines_metric(1:2, :)' * l_lines_metric(1:2, :)) < 1e-3));
 disp('Sanity Check [Metric Rectification] - The rectified lines are orthogonal: ✅');
@@ -162,6 +171,7 @@ disp(['Back Plate Depth: ' num2str(backPlateDepth)]);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 vanishingColor = "#0085E4";
 C_color = "#8800C8";
+S_color = "#F2FF00";
 
 figure;
 figure;
@@ -183,6 +193,8 @@ plotLines(m_points, 'g', 'm', 2);
 plotLines(l_points, 'r', 'l', 2);
 contour(conicErrors, [0, 0], 'Color', C_color, 'LineWidth', 2);
 plotConicParams(center, axes, angle, C_color);
+plot(S_points_image(1, :), S_points_image(2, :), 'Color', S_color, 'LineWidth', 2);
+text(S_points_image(1, 1), S_points_image(2, 1) + 20, 'S', 'Color', S_color, 'FontSize', 11);
 
 % plot the line at infinity
 xs = 1:size(im, 2);
@@ -198,6 +210,8 @@ plotLines(m_points_aff, 'g', 'm', 2);
 plotLines(l_points_aff, 'r', 'l', 2);
 contour(C_aff_errors, [0, 0], 'Color', C_color, 'LineWidth', 2);
 plotConicParams(center_aff, axes_aff, angle_aff, C_color);
+plot(S_points_aff(1, :), S_points_aff(2, :), 'Color', S_color, 'LineWidth', 2);
+text(S_points_aff(1, 1), S_points_aff(2, 1) + 20, 'S', 'Color', S_color, 'FontSize', 11);
 title('Affine Rectification + lines + conic');
 
 figure;
@@ -207,12 +221,14 @@ plotLines(m_points_metric, 'g', 'm', 2);
 plotLines(l_points_metric, 'r', 'l', 2);
 contour(C_metric_errors, [0, 0], 'Color', C_color, 'LineWidth', 2);
 plotConicParams(center_metric, axes_metric, angle_metric, C_color);
+plot(S_points_metric(1, :), S_points_metric(2, :), 'Color', S_color, 'LineWidth', 2);
+text(S_points_metric(1, 1), S_points_metric(2, 1) + 20, 'S', 'Color', S_color, 'FontSize', 11);
 title('Metric Rectification + lines + conic');
 
 
 %% Save the matric rectification homography
 % H_metric = H_metric/l1_legnth;
-save('./H_metric.mat', 'H_metric', 'l1_length', "l2_length", 'l_points_metric', 'm_points_metric', 'depth_m', 'backPlateDepth');
+save('./H_metric.mat', 'H_metric', 'l1_length', "l2_length", 'l_points_metric', 'm_points_metric', 'depth_m', 'backPlateDepth', 'S_points_metric');
 
 
 %% Pick 12 points on the curve S

@@ -79,7 +79,7 @@ plotCamera('Location', [0, 0, -0.2], 'Orientation', eye(3), 'Size', 0.1, 'Color'
 plot3(world_points(1, :), world_points(2, :), world_points(3, :), 'k.', 'MarkerSize', 20);
 
 %% Plot the S curve
-load('../2.5-2.6-Curve_S_and_Camera_Localization/S_points.mat');
+load('../2.0-ManualLineExtraction/S_points.mat');
 S_points = S_points_image;
 S_points = [S_points; ones(1, size(S_points, 2))];
 S_points = H_metric * S_points;
