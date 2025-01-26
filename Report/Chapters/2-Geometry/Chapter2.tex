@@ -75,21 +75,66 @@ $$
 To rectify the upper face of the cabinet a stratified approach has been chosen. The rectification is the outcome of three steps:
 \begin{enumerate}
     \item Affine Rectification
-    \item Similarity to make $C$ a circle
-    \item Isometry to align the axis (optional)
+    \item Affinity to make $C$ a circle
+    \item Affinity to align the axis and allign the plot (optional)
 \end{enumerate}
 
 \subsection{Affine Rectification}
-The purpose of the affine rectification is to find the Homography $H_{aff}$ such that $H_{aff}^{-T} 
- \cdot l_{\infty{}}' = l_\infty{} = \colvec{0, 0, 1}$
+The purpose of the affine rectification is to find the Homography $H_{aff}$ such that $$H_{aff}^{-T} 
+ \cdot l_{\infty{}}' = l_\infty{} = \colvec{0, 0, 1}$$
 
  Consequently $H_{aff}$ has to be of this form:
  $$
  H_{aff} = \matrixdim{3}{3}{*, *, *, *, *, *, ,l_{\infty{}}'^T, }
  $$
 
- In order to make the affinely reconstructed image of a more manageable size the following homography has been chosen:
+ In order to make the affine reconstructed image of a more manageable size the following homography has been chosen:
 
   $$
  H_{aff} = \matrixdim{3}{3}{\frac{1}{10}, 0, 0, 0, \frac{1}{10}, 0,-8.0288 \cdot 10^{-05}, -0.0011, 1}
  $$
+
+ \begin{figure}[H]
+\centering
+\includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/2.2-MetricRectification/Affine Rectification.png}
+\caption{\label{fig:Affine rectification}The result of the affine rectification}
+\end{figure}
+
+\subsection{Affinity to make $C$ a circle}
+Given the extracted conic $C$ in homogeneous matrix form, one can apply the affine rectification obtaining:
+$$
+C_{aff} = H_{aff}^{-T} \cdot C \cdot H_{aff}^{-1}
+$$
+
+From that the length ($a$ and $b$) and direction ($\theta$) of the ellipse' axis as well as the ellipse center's coordinates ($C_c$) can be extracted:
+
+\begin{equation*}
+\begin{split}
+a &= 74.0106\text{ pixels}\\
+b &= 31.8570\text{ pixels}\\
+\theta &= 0.5529\text{ rad}\\
+C_C &= \colvec{180.4210, 176.4675, 1} \text{ pixels}
+\end{split}
+\end{equation*}
+
+The Homography necessary to turn $C_{aff}$ back into a circle can be factored into an isometry $U$ and a scaling $S$ as $H_{circle} = U S U^{-1}$. The two homographies can be built as follows:
+
+\begin{equation*}
+\begin{split}
+U &= \matrixdim{3}{3}{\cos{\theta}, -\sin{\theta}, , \sin{\theta}, \cos{\theta}, C_c, 0, 0, }\\
+S &= \matrixdim{3}{3}{1, 0, 0, 0, a/b, 0, 0, 0, 1}\\
+\theta &= 0.5529\text{ rad}
+\end{split}
+\end{equation*}
+
+Thus a shape reconstructing homography can be:
+$$H_{metric} = H_{circle} \cdot H_{aff}$$
+
+\subsection{Affinity to align the axis and align the plot (optional)}
+
+To facilitate subsequent tasks another affinity is necessary to align the $l$ lines to the x-axis and to center the plot. This is encapsulated in $H_{offset}$
+
+The final Rectifing Homography is thus:
+
+$$H_{metric} = H_{off} \cdot H_{circle} \cdot H_{aff} = \matrixdim{3}{3}{0.1041, -0.2222, 138.2097, -0.0286, 0.1633, -14.5239, -0.0001, -0.0011, 1}$$
+
