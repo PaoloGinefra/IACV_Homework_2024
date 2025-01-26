@@ -70,3 +70,26 @@ $$
 \caption{\label{fig:Vanishing Line}The Extracted image of the vanishing line}
 \end{figure}
 
+
+\section{Metric Rectification and depth estimation}
+To rectify the upper face of the cabinet a stratified approach has been chosen. The rectification is the outcome of three steps:
+\begin{enumerate}
+    \item Affine Rectification
+    \item Similarity to make $C$ a circle
+    \item Isometry to align the axis (optional)
+\end{enumerate}
+
+\subsection{Affine Rectification}
+The purpose of the affine rectification is to find the Homography $H_{aff}$ such that $H_{aff}^{-T} 
+ \cdot l_{\infty{}}' = l_\infty{} = \colvec{0, 0, 1}$
+
+ Consequently $H_{aff}$ has to be of this form:
+ $$
+ H_{aff} = \matrixdim{3}{3}{*, *, *, *, *, *, ,l_{\infty{}}'^T, }
+ $$
+
+ In order to make the affinely reconstructed image of a more manageable size the following homography has been chosen:
+
+  $$
+ H_{aff} = \matrixdim{3}{3}{\frac{1}{10}, 0, 0, 0, \frac{1}{10}, 0,-8.0288 \cdot 10^{-05}, -0.0011, 1}
+ $$
