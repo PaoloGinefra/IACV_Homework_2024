@@ -11,7 +11,6 @@ crop_left = 285;
 crop_right = 1462;
 im = im(crop_top+1:crop_bottom, crop_left+1:crop_right, :);
 
-
 figure;
 imshow(im);
 impixelinfo;
@@ -25,14 +24,6 @@ HSV_features = reshape(im_hsv, size(im_hsv, 1)*size(im_hsv, 2), 3)';
 
 % features = [RGB_features(1:2, :); HSV_features(2:2, :)];
 features = [RGB_features; HSV_features(2:3, :)];
-
-%% Plot histogram per feature
-% figure;
-% for i = 1:size(features, 1)
-%     subplot(2, 3, i);
-%     histogram(features(i, :), 100);
-%     title(['Feature ', num2str(i)]);
-% end
 
 
 %% Perform PCA
@@ -88,24 +79,28 @@ zlabel('Principal Component 3');
 
 % Plot the image in the first principal component
 figure;
+subplot(3, 1, 1);
 imagesc(reshape(features_pca(1, :), size(im, 1), size(im, 2)));
 title('First Principal Component');
+axis equal;
 impixelinfo;
 %set gray colormap
 colormap(gray);
 
 % Plot the image in the second principal component
-figure;
+subplot(3, 1, 2);
 imagesc(reshape(features_pca(2, :), size(im, 1), size(im, 2)));
 title('Second Principal Component');
+axis equal;
 impixelinfo;
 %set gray colormap
 colormap(gray);
 
 % Plot the image in the third principal component
-figure;
+subplot(3, 1, 3);
 imagesc(reshape(features_pca(3, :), size(im, 1), size(im, 2)));
 title('Third Principal Component');
+axis equal;
 impixelinfo;
 %set gray colormap
 colormap(gray);
@@ -125,15 +120,18 @@ sigma = 20;
 im_edges_blurred = imgaussfilt(double(im_edges), sigma);
 
 figure;
+subplot(2, 1, 1);
 imagesc(im_edges_blurred);
+axis equal;
 title('Blurred Edges');
 
 % threshold the edges
-threshold = 0.1;
+threshold = 0.065;
 im_edges_mask_pure = im_edges_blurred < threshold;
 
-figure;
+subplot(2, 1, 2);
 imagesc(im_edges_mask_pure);
+axis equal;
 title('Thresholded Edges');
 
 % mask the edges
@@ -141,12 +139,13 @@ im_edges = im_edges_mask_pure .* im_edges;
 
 figure;
 imshow(im_edges);
+axis equal;
 title('Masked Edges');
 
 % apply hough transform
-[H, theta, rho] = hough(im_edges);
-peaks = houghpeaks(H, 50, "Threshold", 0.3 * max(H(:)), "NHoodSize", [21, 21]);
-lines = houghlines(im_edges, theta, rho, peaks, "FillGap", 150, "MinLength", 100);
+[H, theta, rho] = hough(im_edges, "Theta", -90:1:89.9, "RhoResolution", 6);
+peaks = houghpeaks(H, 50, "Threshold", 0.3 * max(H(:)), "NHoodSize", [11, 11]);
+lines = houghlines(im_edges, theta, rho, peaks, "FillGap", 50, "MinLength", 150);
 
 % Plot the lines
 figure;
@@ -157,47 +156,5 @@ for i = 1:length(lines)
     plot(xy(:, 1), xy(:, 2), 'LineWidth', 2, 'Color', 'red');
 end
 title('Hough Transform Lines');
-
-% Mask
-threshold_upper = 0;
-threshold_lower = -0.6;
-mask = features_pca(1, :) < threshold_upper & features_pca(1, :) > threshold_lower;
-
-
-% Plot the mask
-figure;
-imagesc(reshape(mask, size(im, 1), size(im, 2)));
-title('Mask');
-
-% Convolution filtering
-%gaussian filter
-sigma = 15;
-kernel_size = 2 * sigma;
-gaussian_filter = fspecial('gaussian', kernel_size, sigma);
-filter_max = max(gaussian_filter(:));
-
-gaussian_filter = 2  * gaussian_filter - filter_max;
-
-% Apply the filter
-source = reshape(features_pca(2, :), size(im, 1), size(im, 2));
-filtered_image = conv2(source, gaussian_filter, 'same');
-
-% Plot the filtered image
-figure;
-imagesc(filtered_image);
-title('Filtered Image');
-impixelinfo;
-
-% Threshold the filtered image
-threshold = -0.05;
-filtered_mask = filtered_image < threshold;
-
-% Plot the filtered mask
-figure;
-imagesc(filtered_mask);
-title('Filtered Mask');
-
-
-
 
 
