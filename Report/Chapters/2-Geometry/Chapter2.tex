@@ -138,3 +138,66 @@ The final Rectifing Homography is thus:
 
 $$H_{metric} = H_{off} \cdot H_{circle} \cdot H_{aff} = \matrixdim{3}{3}{0.1041, -0.2222, 138.2097, -0.0286, 0.1633, -14.5239, -0.0001, -0.0011, 1}$$
 
+The result of the rectification is the following:
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/2.2-MetricRectification/Metric Rectification.png}
+\caption{\label{fig:Metric rectification}The result of the metric rectification}
+\end{figure}
+
+\subsection{Depth estimation}
+Estimating the depth $m$ is only a matter of measuring the right things. $m_5$ and $m_6$ are the only lines spanning the whole depth and they are both coplanar to $l_2$ and $l_3$ that are both 1 unit long in the scene. Since lines that share the same horizontal plane have the same scaling factor in the metric rectification, follows that by calling $m_{5_1}^m$, $m_{5_2}^m$, $m_{6_1}^m$, $m_{6_2}^m$ $l_{2_1}^m$, $l_{2_2}^m$, $l_{3_1}^m$, $l_{3_2}^m$ the homogenous coordinates of the pixel coordinated of the endpoints of the segments in the metric rectified image, the depth is:
+
+$$
+m = \frac{||m_{5_1}^m - m_{5_2}^m|| + ||m_{6_1}^m - m_{6_2}^m||}{||l_{2_1}^m - l_{2_2}^m|| + ||l_{3_1}^m - l_{3_2}^m||} = 0.39571 \text{ units} 
+$$
+
+With the exact same reasoning translated to the $m_{1:4}$ and $l_1$ lines, the internal depth of the cabinet can be computed:
+
+$$
+m_{internal} = 0.35073 \text{ units} 
+$$
+
+With this two information, the depth of the back plate of the cabinet can be estimated (This will come in handy for the 3D model reconstruction).
+
+$$
+m_{backplate} = m - m_{internal} = 0.044985 \text{ units}
+$$
+
+\section{Intrinsic Calibration}
+The goal of this task is to find the calibration matrix $K$ built as follows:
+$$
+K = \matrixdim{3}{3}{f_x, 0, U_0, 0, f_y, V_0, 0, 0, 1}
+$$
+
+Instead of estimating $K$ directly, it is easier to find $\omega \overset{\Delta}{=} (KK^T)^{-1}$.
+This matrix is built as follows:
+$$
+\omega = \matrixdim{3}{3}{a^2, 0, -U_0a^2, 0, 1, -V_0, -U_0a^2, -V_0, f_y^2+a^2U_0^2+V_0^2}
+$$
+
+
+By knowing an homography $H = [h_1, h_2, h_3]$ that goes from the coordinate on a plane $\pi$ to the image space and the vanishing point $v$ along the direction orthogonal to $\pi$, the following conditions must hold:
+\begin{equation*}
+\begin{split}
+h_1^T\omega h_2 &= 0 \\
+h_1^T\omega h_1 - h_2^T\omega h_2 &= 0\\
+v^T\omega h_1 &= 0 \\
+v^T\omega h_2 &= 0
+\end{split}
+\end{equation*}
+
+And thus the entries of $\omega$ can be estimated as solutions of a linear system of equations.
+
+$K$ can then be reconstructed with the Cholesky decomposition of $\omega^-1$.
+
+In this case, the homography $H$ used is equal to $H_{metric}^{-1}$ thus setting the plane $\pi$ to be horizontal. The vanishing point $v$ can be computed with Procedure~\ref{proc:FindingIntersection} on the lines $h_{1:4}$.
+
+The estimated calibration matrix is:
+$$
+K = \matrixdim{3}{3}{782.3411, 0, 800.8240, 0, 789.2100, 534.6531, 0, 0, 1}
+$$
+
+\section{Height estimation}
+By multiplying $H$ with $K^{-1}$, the basis of $\pi$ $r1$ and $r2$ and the offset $o_\pi$ are obtained, expressed in the refence frame of the camera.
