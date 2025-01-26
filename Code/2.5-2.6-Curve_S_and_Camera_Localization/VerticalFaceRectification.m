@@ -35,6 +35,9 @@ if(PICK_POINTS)
     figure;
     imshow(im_warped);
     title('Pick the three reference lines on the rectified Image');
+    % Ask for input befor start
+    start = input('Press Enter to start');
+    
     [reference_points, reference_lines] = drawLines('Reference', 4);
     save('./vertical_reference_points.mat', 'reference_points', 'reference_lines');
 else
@@ -44,7 +47,8 @@ else
     hold on;
     for i = 1:size(reference_lines, 2)
         line(reference_points(1, 2*i-1:2*i), reference_points(2, 2*i-1:2*i), 'Color', 'r', 'LineWidth', 2);
-        text(mean(reference_points(1, 2*i-1:2*i)), mean(reference_points(2, 2*i-1:2*i)), ['Reference Line ' num2str(i)], 'Color', 'r', 'FontSize', 14);
+        random_offset = randi(50, 1);
+        text(mean(reference_points(1, 2*i-1:2*i)), mean(reference_points(2, 2*i-1:2*i)) + 20 + random_offset, ['ref ' num2str(i)], 'Color', 'r', 'FontSize', 14);
     end
 end
 
