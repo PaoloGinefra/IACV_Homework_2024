@@ -11,6 +11,9 @@ imshow(im);
 title('Select the points');
 hold on;
 pointNumber = 1;
+
+%Get user input to start
+start = input('Press enter to start picking points');
 while true
     try
         [x, y] = ginput(1);
@@ -25,5 +28,5 @@ while true
     extractedPoints = [extractedPoints, point];
     pointNumber = pointNumber + 1;
 end
-
-save('./points.mat', 'extractedPoints');
+S_points_image = extractedPoints;
+save('./S_points.mat', 'S_points_image');

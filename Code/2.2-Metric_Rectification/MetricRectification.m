@@ -212,7 +212,7 @@ title('Metric Rectification + lines + conic');
 
 %% Save the matric rectification homography
 % H_metric = H_metric/l1_legnth;
-save('./H_metric.mat', 'H_metric', 'l1_length', "l2_length", 'l_points_metric', 'm_points_metric', 'depth_m');
+save('./H_metric.mat', 'H_metric', 'l1_length', "l2_length", 'l_points_metric', 'm_points_metric', 'depth_m', 'backPlateDepth');
 
 
 %% Pick 12 points on the curve S
@@ -224,6 +224,8 @@ if PICK_POINTS
     imshow(im_metric);
     title(['Pick ' num2str(n_points) ' points on the curve S']);
     hold on;
+    %Take user input to start the point picking
+    start = input('Press enter to start picking points');
     [x, y] = ginput(n_points);
     S_points = [x, y];
     plot(S_points(:, 1), S_points(:, 2), 'rx', 'MarkerSize', 10, 'LineWidth', 2);

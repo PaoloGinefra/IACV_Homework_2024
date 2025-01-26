@@ -57,6 +57,7 @@ plot3(world_l_points(1, 3:4), world_l_points(2, 3:4), world_l_points(3, 3:4), 'r
 plot3(world_l_points(1, 5:6), world_l_points(2, 5:6), world_l_points(3, 5:6), 'r', 'LineWidth', 2);
 
 world_m_points = rs(:, 1:2) * m_points_metric + rs(:, 3);
+world_m_points(:, 9:end) = world_m_points(:, 9:end) * l1_length/l2_length;
 load('./vertical_height.mat');
 m_scaling = 1 - padding / (rs(:, 3)' * r3);
 world_m_points = world_m_points * m_scaling;
@@ -78,10 +79,13 @@ plotCamera('Location', [0, 0, -0.2], 'Orientation', eye(3), 'Size', 0.1, 'Color'
 plot3(world_points(1, :), world_points(2, :), world_points(3, :), 'k.', 'MarkerSize', 20);
 
 %% Plot the S curve
-load('../S_points.mat');
-S_points_world = rs(:, 1:2) * S_points' + rs(:, 3);
+load('../2.5-2.6-Curve_S_and_Camera_Localization/S_points.mat');
+S_points = S_points_image;
+S_points = [S_points; ones(1, size(S_points, 2))];
+S_points = H_metric * S_points;
+S_points = S_points ./ S_points(3, :);
+S_points_world = rs * S_points;
 scaling = 1 - height / (2 * rs(:, 3)' * r3);
-
 S_points_world = S_points_world * scaling;
 
 plot3(S_points_world(1, :), S_points_world(2, :), S_points_world(3, :), 'b', 'LineWidth', 2);
@@ -127,6 +131,8 @@ plot3(world_m_points(1, 1:2), world_m_points(2, 1:2), world_m_points(3, 1:2), 'g
 plot3(world_m_points(1, 3:4), world_m_points(2, 3:4), world_m_points(3, 3:4), 'g', 'LineWidth', 2);
 plot3(world_m_points(1, 5:6), world_m_points(2, 5:6), world_m_points(3, 5:6), 'g', 'LineWidth', 2);
 plot3(world_m_points(1, 7:8), world_m_points(2, 7:8), world_m_points(3, 7:8), 'g', 'LineWidth', 2);
+plot3(world_m_points(1, 9:10), world_m_points(2, 9:10), world_m_points(3, 9:10), 'g', 'LineWidth', 2);
+plot3(world_m_points(1, 11:12), world_m_points(2, 11:12), world_m_points(3, 11:12), 'g', 'LineWidth', 2);
 
 plot3(S_points_world(1, :), S_points_world(2, :), S_points_world(3, :), 'b', 'LineWidth', 2);
 
@@ -160,7 +166,7 @@ parallelepiped_color = "#BCAD5C";
 parallelepiped_alpha = 0.6;
 % bottom Face
 bottomFace_x = [0, 1, 1, 0];
-bottomFace_y = [0, 0, depth_m+padding, depth_m+padding];
+bottomFace_y = [0, 0, depth_m, depth_m];
 bottomFace_z = [0, 0, 0, 0];
 
 patch(bottomFace_x, bottomFace_y, bottomFace_z,'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
@@ -172,13 +178,13 @@ topFace_z = bottomFace_z + height;
 patch(topFace_x, topFace_y, topFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
 
 backFace_x = [0, 1, 1, 0];
-backFace_y = ones(1, 4) * (depth_m + padding);
+backFace_y = ones(1, 4) * (depth_m);
 backFace_z = [0, 0, height, height];
 
 patch(backFace_x, backFace_y, backFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
 
 leftFace_x = [0, 0, 0, 0];
-leftFace_y = [0, 0, depth_m + padding, depth_m + padding];
+leftFace_y = [0, 0, depth_m, depth_m];
 leftFace_z = [0, height, height, 0];
 
 patch(leftFace_x, leftFace_y, leftFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
@@ -190,7 +196,7 @@ rightFace_z = leftFace_z;
 patch(rightFace_x, rightFace_y, rightFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
 
 inner_bottomFace_x = [padding, 1-padding, 1-padding, padding];
-inner_bottomFace_y = [0, 0, depth_m, depth_m];
+inner_bottomFace_y = [0, 0, depth_m - backPlateDepth, depth_m - backPlateDepth];
 inner_bottomFace_z = ones(1, 4) * padding;
 
 patch(inner_bottomFace_x, inner_bottomFace_y, inner_bottomFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
@@ -202,13 +208,13 @@ inner_topFace_z = inner_bottomFace_z + height - 2 * padding;
 patch(inner_topFace_x, inner_topFace_y, inner_topFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
 
 inner_backFace_x = [padding, 1-padding, 1-padding, padding];
-inner_backFace_y = ones(1, 4) * depth_m;
+inner_backFace_y = ones(1, 4) * (depth_m- backPlateDepth);
 inner_backFace_z = [padding, padding, height-padding, height-padding];
 
 patch(inner_backFace_x, inner_backFace_y, inner_backFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
 
 inner_leftFace_x = [padding, padding, padding, padding];
-inner_leftFace_y = [0, 0, depth_m, depth_m];
+inner_leftFace_y = [0, 0, depth_m- backPlateDepth, depth_m- backPlateDepth];
 inner_leftFace_z = [padding, height-padding, height-padding, padding];
 
 patch(inner_leftFace_x, inner_leftFace_y, inner_leftFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
@@ -220,7 +226,7 @@ inner_rightFace_z = inner_leftFace_z;
 patch(inner_rightFace_x, inner_rightFace_y, inner_rightFace_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
 
 inner_first_separator_x = ones(1, 4) * (padding + cell_width);
-inner_first_separator_y = [0, 0, depth_m, depth_m];
+inner_first_separator_y = [0, 0, depth_m- backPlateDepth, depth_m- backPlateDepth];
 inner_first_separator_z = [padding, height-padding, height-padding, padding];
 
 patch(inner_first_separator_x, inner_first_separator_y, inner_first_separator_z, 'r', 'FaceColor', parallelepiped_color, 'FaceAlpha', parallelepiped_alpha);
