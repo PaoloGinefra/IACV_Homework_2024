@@ -4,7 +4,80 @@
 \section{Line extraction}
 In order to extract the most significant lines:
 \begin{enumerate}
-    \item 
+    \item Crop the image to the desired portion
+    \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/CroppedImage.png}
+    \caption{\label{fig:lines:cropped}The image cropped}
+    \end{figure}
+
+    \item Convert to HSV color space.
+
+    \item Perform the SVD on the RGB channels plus the Saturation and Value.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/SingularValues.png}
+    \caption{\label{fig:lines:sv}The singular values distribution}
+    \end{figure}
+
+    \item Compute the Principal Components
+    \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/PCAFeatures.png}
+    \caption{\label{fig:lines:pc 2d}The first 2 principal components}
+    \end{figure}
+
+        \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/PCAFeatures3D.png}
+    \caption{\label{fig:lines:pc 3d}The first 3 principal components}
+    \end{figure}
+    
+    \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/CovarianceMatrix.png}
+    \caption{\label{fig:lines:cov}The Covariance matrix between principal components}
+    \end{figure}
+
+        \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/PrincipalComponents.png}
+    \caption{\label{fig:lines:cov}The first three principal components in image form}
+    \end{figure}
+
+    \item Apply Canny Edge detection to the first principal component
+
+            \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/CannyEdges.png}
+    \caption{\label{fig:lines:edge}Canny edge detection on the first principal component}
+    \end{figure}
+
+    \item Remove edges that are too crowded, like the holes of the colander. To do that, first heavily blur the image then threshold the image to select the sparser areas. Use this to mask the edges.
+
+                \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/ThresholdedEdges.png}
+    \caption{\label{fig:lines:mask}Create the edge mask}
+    \end{figure}
+    
+                \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/MaskedEdges.png}
+    \caption{\label{fig:lines:edge}Canny edge detection on the first principal component}
+    \end{figure}
+
+    \item Apply the Hough Transform to the masked edges
+
+                    \begin{figure}[H]
+    \centering
+    \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Features/Lines/HoughLines.png}
+    \caption{\label{fig:lines:lines}Hough Transform result}
+    \end{figure}
+
+
+    
 \end{enumerate}
 
 \section{Conic Extraction}
