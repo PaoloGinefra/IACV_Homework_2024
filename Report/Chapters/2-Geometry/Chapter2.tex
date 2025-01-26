@@ -1,0 +1,59 @@
+\chapter{Scene Geometry Reconstruction}
+\label{ch:Scene Geometry}
+
+\section{Finding the vanishing line $l'_\infty$ of the horizontal plane}
+
+\begin{Procedure}[label=proc:FindingIntersection]{Robust finding of the intersection between multiple intersecting lines}
+This procedure aims at finding the intersection point $P$ of a given set of $n \geq 2$ intersecting lines $l_i \, \forall i \in \{1, ..., n\}$. Both the point $P$ and the lines $l_i$ are provided in homogenous coordinates. Thus $$\underline{P} \overset{\Delta}{=} \colvec{P_x, P_y, 1}$$ and $$\underline{l_i} \overset{\Delta}{=} \colvec{l_{ix}, l_{iy}, 1} \, \forall i \in \{1, ..., n\}$$. The matrix $L$ is defined as $$L = \matrixdim{1}{4}{\underline{l_1}, \underline{l_2}, \dots, \underline{l_n}}$$
+
+Were all the lines perfectly intersecting in a single point it would hold $$L^T\underline{P} = \underline{0}$$
+
+and thus
+
+$$\underline{P} \in RNS(L)$$
+
+Unfortunately, in the real world, seldom do $n$ "intersecting" lines actually intersect. An approximated solution is needed and thus the problem becomes an optimization one:
+
+$$
+\underline{P} \overset{\Delta}{=} \argmin_{\underline{x}} ||L^T\underline{x}||_2
+$$
+
+This problem can be solved using the Singular Value Decomposition (SVD) on the $L$ matrix:
+\begin{equation}
+    \begin{matrix}
+        L = U \Sigma V^T \\
+        \text{ where } \\
+        U, \Sigma, V \in \mathbb{R}^{3x3}, \\
+        U\cdot U^T = I, \\
+        V\cdot V^T = I,\\
+        \Sigma_{ii} = \sigma_i \in \mathbb{R} \; \forall i \in \{1, ..., 3\}, \\
+         \Sigma_{ij} = 0 \; \forall i \in \{1, ..., 3\}, \forall j \in \{1, ..., 3\}, i\neq j, \\
+         |\sigma_i| >= |\sigma_j| \; \forall i, j \in \{1, ..., 3\}, i<j
+    \end{matrix}
+\end{equation}
+
+Since the $\sigma_i$ are in absolute nonincreasing order it can be easily derived that the optimal solution up to scale is:
+
+$$
+\underline{P} \overset{\Delta}{=} V_n := \text{n-th column of V}
+$$
+\end{Procedure}
+
+The image of the vanishing line $l'_\infty$ of the horizontal plane can be found as the line going through the images of two distinct vanishing points of the horizontal plane. Luckily, the vanishing point associated with a direction in the horizontal plane is shared with all parallel planes, and thus the $m$s and $l$s lines will all meet respectively in the vanishing points $v_m$ and $v_l$. 
+
+Using Procedure~\ref{proc:FindingIntersection} the best approximation for $v_m$ and $v_l$ can be computed.
+
+The line $l'_\infty$ is now defined as :
+
+\begin{equation*}
+\begin{split}
+l'_{\infty{}}^T v_m &= 0\\
+l'_{\infty{}}^T v_l &= 0
+\end{split}
+\end{equation*}
+
+and thus:
+
+$$
+l'_\infty{} \overset{\Delta}{=} v_m \times v_l
+$$

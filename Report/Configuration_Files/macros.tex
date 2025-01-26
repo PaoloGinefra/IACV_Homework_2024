@@ -74,3 +74,14 @@
 
 % How to use:
 % \matrixdim{2}{3}{a_{11}, a_{12}, a_{13}, a_{21}, a_{22}, a_{23}}
+
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+
+\newtcbtheorem[auto counter]{Procedure}{Procedure}%
+{colback=green!5,
+colframe=green!35!black,
+fonttitle=\bfseries,
+breakable}{th}
+
+\newcommand{\argmin}{\mathop{\mathrm{argmin}}} 
