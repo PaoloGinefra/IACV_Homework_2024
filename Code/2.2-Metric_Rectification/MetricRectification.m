@@ -72,14 +72,16 @@ C_aff_errors = computeConicErrors(C_aff, im_warped);
 [center_aff, axes_aff, angle_aff] = paramsFromHomogenousConic_separated(C_aff);
 
 % Rotation
-U = [cos(angle_aff), -sin(angle_aff); sin(angle_aff), cos(angle_aff);];
+U = [
+    cos(angle_aff), -sin(angle_aff), center_aff(1);
+    sin(angle_aff), cos(angle_aff), center_aff(2);
+    0, 0, 1];
 
 % Rescaling the axis to make them equal
 a = axes_aff(1);
 b = axes_aff(2);
-S = diag([1, a/b]);
-K = U*S*U';
-H_2 = [K, zeros(2, 1); 0, 0, 1];
+S = diag([1, a/b, 1]);
+H_2 = U*S*inv(U);
 
 % Compute the metric rectification homography
 H_metric = H_2 * H_aff;
@@ -97,8 +99,13 @@ avg_rotation = -mean(angles) + 90;
 R = [cosd(avg_rotation), -sind(avg_rotation); sind(avg_rotation), cosd(avg_rotation)];
 H_rotation = [R, zeros(2, 1); 0, 0, 1];
 
+H_Offset = [
+    0.8, 0, 100;
+    0, 0.8, 30;
+    0, 0, 1];
+
 % Apply the rotation to the homography
-H_metric = H_rotation * H_metric;
+H_metric = H_Offset * H_rotation * H_metric;
 H_metric_inv = inv(H_metric);
 
 %% Apply the metric rectification
@@ -262,8 +269,11 @@ corners =  [
 
 corners_warped = warpPoint(corners, H);
 
-h_warped = ceil(max(corners_warped(2, :)) - min(corners_warped(2, :))) * 2;
-w_warped = ceil(max(corners_warped(1, :)) - min(corners_warped(1, :))) * 2;
+h_warped = ceil(max(corners_warped(2, :)) - min(corners_warped(2, :)) * 2);
+w_warped = ceil(max(corners_warped(1, :)) - min(corners_warped(1, :)) * 3);
+
+h_warped = max(h_warped, w_warped);
+w_warped = h_warped;
 
 imageWarped = zeros(h_warped, w_warped, 3, 'uint8');
 
