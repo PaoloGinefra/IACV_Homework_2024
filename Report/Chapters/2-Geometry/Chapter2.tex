@@ -200,4 +200,11 @@ K = \matrixdim{3}{3}{782.3411, 0, 800.8240, 0, 789.2100, 534.6531, 0, 0, 1}
 $$
 
 \section{Height estimation}
-By multiplying $H$ with $K^{-1}$, the basis of $\pi$ $r1$ and $r2$ and the offset $o_\pi$ are obtained, expressed in the refence frame of the camera.
+By multiplying $H$ with $K^{-1}$, a set of basis of $\pi$ $r1$ and $r2$ and the offset $o_\pi$ are obtained, expressed in the reference frame of the camera:
+$$\matrixdim{1}{3}{r_1, r_2, o_\pi} = K^{-1}H$$
+
+These coordinates are known up to scale, which is the key for selecting planes at a given height. That's because it is known that the segments $l_{1:3}$ are 1 unit long in the scene, thus by dividing the vectors by the length of the metric rectified  $l_1^m$ ($|l_1^m|$) or $l_2^m$ ($|l_2^m|$), a set of 3D origin and coordinates of the upper and lower face of the cabinet can be found. Calling $\hat{r_3}$ a unit vector orthogonal to both $r_1$ and $r_2$, the height can be simply computed as:
+$$
+h = \hat{r_3}^T \cdot (\frac{o_\pi}{|l_1^m|} - \frac{o_\pi}{|l_2^m|}) = (\frac{1}{|l_1^m|} - \frac{1}{|l_2^m|}) \hat{r_3}^T \cdot o_\pi = 0.3842 \text{ units}
+$$
+
