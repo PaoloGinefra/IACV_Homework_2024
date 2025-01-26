@@ -55,18 +55,28 @@ end
 
 %% Plot the intersection points
 plot(l_intersection_euclidian(1), l_intersection_euclidian(2), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+text(l_intersection_euclidian(1), l_intersection_euclidian(2) + 30, 'v_l', 'Color', 'r', 'FontSize', 20, 'FontWeight', 'bold');
 plot(m_intersection_euclidian(1), m_intersection_euclidian(2), 'gx', 'MarkerSize', 10, 'LineWidth', 2);
+text(m_intersection_euclidian(1), m_intersection_euclidian(2) + 30, 'v_m', 'Color', 'g', 'FontSize', 20, 'FontWeight', 'bold');
 
 %% Calculate the vanishing line
 l_h_inf_prime = cross(l_intersection, m_intersection);
+l_h_inf_prime = l_h_inf_prime / l_h_inf_prime(3);
+
+%Print the vanishing line
+disp('Vanishing Line of the Horizontal Plane:');
+disp(l_h_inf_prime);
 
 %% Plot the vanishing line
 x_min =  min(1, min(m_intersection_euclidian(1), l_intersection_euclidian(1)));
 x_max = max(size(im, 2), max(m_intersection_euclidian(2), l_intersection_euclidian(2)));
 x = x_min:x_max;
 y = (-l_h_inf_prime(3) - l_h_inf_prime(1) * x) / l_h_inf_prime(2);
-plot(x, y, 'b--', 'LineWidth', 2);
-text(mean(x), mean(y), 'Vanishing Line', 'Color', 'b', 'FontSize', 12, 'FontWeight', 'bold');
+
+vanishingColor = "#0085E4";
+% Dotted line
+plot(x, y, 'Color', vanishingColor, 'LineStyle', '--', 'LineWidth', 2);
+text(mean(x), mean(y), 'Image of the vanishing Line', 'Color', vanishingColor, 'FontSize', 12, 'FontWeight', 'bold');
 title('Vanishing Line');
 
 %% Save the vanishing line
