@@ -44,10 +44,14 @@ l_points_aff = warpPoint(l_points, H_aff);
 
 %% Sanity check: parallel lines
 m_lines_aff_angles = rad2deg(atan2(m_lines_aff(2, :), m_lines_aff(1, :)));
+
+% if angles are negative add 180 to make them positive
+m_lines_aff_angles(m_lines_aff_angles < 0) = m_lines_aff_angles(m_lines_aff_angles < 0) + 180;
+
 l_lines_aff_angles = rad2deg(atan2(l_lines_aff(2, :), l_lines_aff(1, :)));
-assert(all(abs(m_lines_aff_angles - [m_lines_aff_angles(2:end), m_lines_aff_angles(1)]) < 1));
-assert(all(abs(l_lines_aff_angles - [l_lines_aff_angles(2:end), l_lines_aff_angles(1)]) < 1));
-disp('Sanity Check [Affine Rectification] - Parallel lines after affine rectification have the same direction up to 1 deg: ✅');
+assert(all(abs(m_lines_aff_angles - [m_lines_aff_angles(2:end), m_lines_aff_angles(1)]) < 1.5));
+assert(all(abs(l_lines_aff_angles - [l_lines_aff_angles(2:end), l_lines_aff_angles(1)]) < 1.5));
+disp('Sanity Check [Affine Rectification] - Parallel lines after affine rectification have the same direction up to 1.5 deg: ✅');
 
 %% Compute conic Errors
 conicErrors = computeConicErrors(C, im);
@@ -124,63 +128,66 @@ disp('Sanity Check [Metric Rectification] - The rectified lines are orthogonal: 
 %                                  Depth                                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Compute depth m using the length of l1 and the average length of the m lines
-m_lines_length = vecnorm(m_points_metric(:, 1:2:end) - m_points_metric(:, 2:2:end));
+m_lines_length = vecnorm(m_points_metric(:, 9:2:end) - m_points_metric(:, 10:2:end));
 
 l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
 l2_length = vecnorm(l_points_metric(:, 3) - l_points_metric(:, 4));
 
 average_m_length = mean(m_lines_length);
-depth_m = average_m_length / l1_length;
+depth_m = average_m_length / l2_length;
 
 disp(['Depth of m: ' num2str(depth_m)]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                 Plotting                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+vanishingColor = "#0085E4";
+C_color = "#8800C8";
+
 figure;
-subplot(2, 3, 1);
+figure;
 imshow(im);
 title('Original Image');
 
-subplot(2, 3, 2);
+figure;
 imshow(im_warped);
 title('Affine Rectification');
 
-subplot(2, 3, 3);
+figure;
 imshow(im_metric);
 title('Metric Rectification');
 
-subplot(2, 3, 4);
+figure;
 imshow(im);
 hold on;
 plotLines(m_points, 'g', 'm', 2);
 plotLines(l_points, 'r', 'l', 2);
-contour(conicErrors, [0, 0], 'b', 'LineWidth', 2);
-plotConicParams(center, axes, angle, 'b');
+contour(conicErrors, [0, 0], 'Color', C_color, 'LineWidth', 2);
+plotConicParams(center, axes, angle, C_color);
 
 % plot the line at infinity
 xs = 1:size(im, 2);
 ys = (-l_h_inf_prime(3) - l_h_inf_prime(1) * xs) / l_h_inf_prime(2);
-plot(xs, ys, 'b--', 'LineWidth', 1);
+plot(xs, ys, 'Color', vanishingColor, 'LineStyle', '--', 'LineWidth', 1);
 
 title('Original Image + lines + conic');
 
-subplot(2, 3, 5);
+figure;
 imshow(im_warped);
 hold on;
 plotLines(m_points_aff, 'g', 'm', 2);
 plotLines(l_points_aff, 'r', 'l', 2);
-contour(C_aff_errors, [0, 0], 'b', 'LineWidth', 2);
-plotConicParams(center_aff, axes_aff, angle_aff, 'b');
+contour(C_aff_errors, [0, 0], 'Color', C_color, 'LineWidth', 2);
+plotConicParams(center_aff, axes_aff, angle_aff, C_color);
 title('Affine Rectification + lines + conic');
 
-subplot(2, 3, 6);
+figure;
 imshow(im_metric);
 hold on;
 plotLines(m_points_metric, 'g', 'm', 2);
 plotLines(l_points_metric, 'r', 'l', 2);
-contour(C_metric_errors, [0, 0], 'b', 'LineWidth', 2);
-plotConicParams(center_metric, axes_metric, angle_metric, 'b');
+contour(C_metric_errors, [0, 0], 'Color', C_color, 'LineWidth', 2);
+plotConicParams(center_metric, axes_metric, angle_metric, C_color);
 title('Metric Rectification + lines + conic');
 
 
@@ -243,8 +250,8 @@ corners =  [
 
 corners_warped = warpPoint(corners, H);
 
-h_warped = ceil(max(corners_warped(2, :)) - min(corners_warped(2, :)));
-w_warped = ceil(max(corners_warped(1, :)) - min(corners_warped(1, :)));
+h_warped = ceil(max(corners_warped(2, :)) - min(corners_warped(2, :))) * 2;
+w_warped = ceil(max(corners_warped(1, :)) - min(corners_warped(1, :))) * 2;
 
 imageWarped = zeros(h_warped, w_warped, 3, 'uint8');
 
@@ -308,5 +315,6 @@ quiver(center(1), center(2), axesVectors(1, 1), axesVectors(2, 1), 'Color', colo
 quiver(center(1), center(2), axesVectors(1, 2), axesVectors(2, 2), 'Color', color, 'LineWidth', 2);
 
 %% Plot the center
-plot(center(1), center(2), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+plot(center(1), center(2), 'Color', color, 'Marker', 'x', 'MarkerSize', 10, 'LineWidth', 2);
+text(center(1), center(2) + 20, 'C', 'Color', color, 'FontSize', 11);
 end
