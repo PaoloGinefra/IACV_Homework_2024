@@ -131,12 +131,24 @@ disp('Sanity Check [Metric Rectification] - The rectified lines are orthogonal: 
 m_lines_length = vecnorm(m_points_metric(:, 9:2:end) - m_points_metric(:, 10:2:end));
 
 l1_length = vecnorm(l_points_metric(:, 1) - l_points_metric(:, 2));
-l2_length = vecnorm(l_points_metric(:, 3) - l_points_metric(:, 4));
+l2_length = vecnorm(l_points_metric(:, 3) - l_points_metric(:, 4)) + vecnorm(l_points_metric(:, 5) - l_points_metric(:, 6));
+l2_length = l2_length / 2;
 
 average_m_length = mean(m_lines_length);
 depth_m = average_m_length / l2_length;
 
-disp(['Depth of m: ' num2str(depth_m)]);
+disp(['Depth m: ' num2str(depth_m)]);
+
+% Compute the inner depth
+m_lines_length = vecnorm(m_points_metric(:, 1:2:8) - m_points_metric(:, 2:2:8));
+average_m_length = mean(m_lines_length);
+depth_m_inner = average_m_length / l1_length;
+
+disp(['Inner Depth m: ' num2str(depth_m_inner)]);
+
+% Compute back plate depth
+backPlateDepth = depth_m - depth_m_inner;
+disp(['Back Plate Depth: ' num2str(backPlateDepth)]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                 Plotting                                 %
