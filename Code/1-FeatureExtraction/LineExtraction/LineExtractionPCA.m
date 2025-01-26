@@ -162,6 +162,9 @@ imagesc(im_edges_mask_pure);
 axis equal;
 title('Thresholded Edges');
 
+% Save the plot for the report
+saveas(gcf, 'ThresholdedEdges.png');
+
 % mask the edges
 im_edges = im_edges_mask_pure .* im_edges;
 
