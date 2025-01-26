@@ -201,10 +201,48 @@ $$
 
 \section{Height estimation}
 By multiplying $H$ with $K^{-1}$, a set of basis of $\pi$ $r1$ and $r2$ and the offset $o_\pi$ are obtained, expressed in the reference frame of the camera:
-$$\matrixdim{1}{3}{r_1, r_2, o_\pi} = K^{-1}H$$
+$$r_{cam} = \matrixdim{1}{3}{r_1, r_2, o_\pi} = K^{-1}H$$
 
 These coordinates are known up to scale, which is the key for selecting planes at a given height. That's because it is known that the segments $l_{1:3}$ are 1 unit long in the scene, thus by dividing the vectors by the length of the metric rectified  $l_1^m$ ($|l_1^m|$) or $l_2^m$ ($|l_2^m|$), a set of 3D origin and coordinates of the upper and lower face of the cabinet can be found. Calling $\hat{r_3}$ a unit vector orthogonal to both $r_1$ and $r_2$, the height can be simply computed as:
 $$
 h = \hat{r_3}^T \cdot (\frac{o_\pi}{|l_1^m|} - \frac{o_\pi}{|l_2^m|}) = (\frac{1}{|l_1^m|} - \frac{1}{|l_2^m|}) \hat{r_3}^T \cdot o_\pi = 0.3842 \text{ units}
 $$
 
+\section{Coordinates of S}
+Starting from the points of the curve in the original image expressed in homogenous coordinates in the matrix $S$. First, they need to be metric rectified obtaining $S_{metric} = H_{metric}\cdot S$. They can then be expressed in the camera 3d coordinate system as $S_{cam}' = r_{cam} \cdot S_{metric}$.
+
+Now the appropriate scaling factor $s$ to place the points at $h/2$ needs to be found. The scaling $s$ is one such that by scaling the offset of the plane of the top face of the cabinet it moves by $h/2$ units along the $\hat{r_3}$ direction
+
+\begin{equation*}
+\begin{split}
+\hat{r_3}^T \cdot(\frac{o_\pi}{|l_1^m|} - s \frac{o_\pi}{|l_1^m|}) &= h/2\\
+(1 - s) &= h/2\\
+s &= 1 - \frac{h\cdot |l_1^m|}{2\cdot \hat{r_3}^T \cdot o_\pi}
+\end{split}
+\end{equation*}
+
+Thus $S_{cam} = s \cdot S_{cam}'$
+
+Then the 3D coordinates of the chosen origin (the bottom left corner of the cabinet closer to the camera) must be found. Luckily, the coordinate of that point in the metric rectification is $l_{2_1}^m$, thus:
+
+$$
+O_{cam} = \frac{r_{cam} \cdot l_{2_1}^m}{|l_2^m|}
+$$
+
+The last piece is to find the $\hat{X}_{cam}$ and $\hat{Y}_{cam}$ versors in the camera space. They are aligned with $r_1$ and $r_2$.
+$$
+\hat{X}_{cam} = r_1 / |r1|
+$$
+$$
+\hat{y}_{cam} = r_2 / |r2|
+$$
+
+Thus 
+$$S_{XY} = \matrixdim{2}{1}{\hat{X}_{cam}^T, \hat{Y}_{cam}^T} \cdot (S_{cam} - O_{cam})$$
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/2.4-S_coordinated/S_coordinates.png}
+\caption{\label{fig:S XY coordinate}The X Y Coordinates of S}
+\end{figure}
