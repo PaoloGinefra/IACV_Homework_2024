@@ -27,3 +27,24 @@ axis) are also visible and their images $h_1$, $h_2$, $h_3$ and $h_4$ are extrac
 \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/Introduction/Image Description.png}
 \caption{\label{fig:SceneDescription}The Scene Description}
 \end{figure}
+
+\subsection{Part1 - Theory}
+\begin{enumerate}
+    \item From the $l_i$ and $m_i$ lines, find the vanishing line $l'_\infty$ of the horizontal plane. 
+    \item Using the results of the previous point, find a (Euclidean) rectification mapping $H_R$ for a horizontal plane (e.g., the lower horizontal face of the parallelepiped), and compute the depth $m$ of the parallelepiped.  
+    \item From the results of the previous points, use the lines $h_i$ to find the calibration matrix $K$. 
+    \item Using the results of the previous points, determine the height $h$ of the parallelepiped.  
+    \item Using $S$ and the results of previous points, compute the X-Y coordinates of a dozen points (at your choice) of the unknown horizontal curve. 
+    \item Using $K$, localize the camera with respect to the parallelepiped.
+\end{enumerate}
+
+\subsection{Part2 - Matlab}
+\begin{enumerate}
+    \item Consider the image "Look-outCat.png". Using feature extraction techniques (including those already implemented in Matlab) plus possible manual intervention, extract the images of useful lines and both the image $C$, of the circumference and the image $S$ of the other planar curve. 
+    \item Write a Matlab program that implements the solutions to problems 1 – 6 and show the obtained results. 
+    \item Plot the rectified curve $S$ and show different views of the recovered 3D model of the 
+rectangular parallelepiped. 
+\end{enumerate}
+
+\section{Document structure}
+Since the Theory and the Matlab code have a significant overlap, they are presented in parallel following the numbering of the Matlab part. The $n-th $ Theory task takes the numbering $2.n$. For each part, the actual code is not reported since it is easily accessible and documented in the GitHub Repository.
