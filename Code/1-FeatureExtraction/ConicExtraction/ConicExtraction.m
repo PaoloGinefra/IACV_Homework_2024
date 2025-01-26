@@ -12,12 +12,25 @@ UR_corner = [773, 505];
 
 % Cut out the region of interest
 im = im(UR_corner(2):BL_corner(2), BL_corner(1):UR_corner(1), :);
+figure;
+imshow(im);
+title('Cropped Image');
+
+% Save the plot for the report
+saveas(gcf, 'CroppedImage.png');
 
 % convert to hsv
 im_hsv = rgb2hsv(im);
 
 % convert to grayscale
 im_gray = im_hsv(:, :, 3);
+
+figure;
+imshow(im_gray);
+title('Grayscale Image');
+
+% Save the plot for the report
+saveas(gcf, 'GrayscaleImage.png');
 
 %% Plot all the channels
 figure;
@@ -60,12 +73,16 @@ subplot(2, 1, 2);
 imshow(im_edges);
 title(['Canny Edges - Threshold: ', num2str(threshold), ' Sigma: ', num2str(sigma)]);
 
+% Save the plot for the report
+saveas(gcf, 'CannyEdges.png');
+
 % Blur the edges
 sigma = 10;
 im_edges_blurred = imgaussfilt(double(im_edges), sigma);
 
 % Display the results
 figure;
+subplot(3, 1, 1);
 imagesc(im_edges_blurred);
 title(['Blurred Edges - Sigma: ', num2str(sigma)]);
 impixelinfo;
@@ -75,7 +92,7 @@ threshold = 0.1;
 im_edges_thresholded = im_edges_blurred > threshold;
 
 % Display the results
-figure;
+subplot(3, 1, 2);
 imagesc(im_edges_thresholded);
 title(['Thresholded Edges - Threshold: ', num2str(threshold)]);
 impixelinfo;
@@ -84,9 +101,12 @@ impixelinfo;
 im_edges = im_edges .* (1-im_edges_thresholded);
 
 % Display the results
-figure;
+subplot(3, 1, 3);
 imshow(im_edges);
 title('Masked Edges');
+
+% Save the plot for the report
+saveas(gcf, 'MaskedEdges.png');
 
 
 %% RANSAC to find the conic
@@ -175,6 +195,9 @@ for step = 1:n
     
 end
 
+% save the plot
+saveas(gcf, 'ConicRANSAC.png');
+
 
 % plot the final conic
 conicPlot = zeros(size(im, 1), size(im, 2));
@@ -191,6 +214,9 @@ imshow(im);
 hold on;
 contour(conicPlot, [0, 0], 'r', 'LineWidth', 2);
 title('Final Conic');
+
+% Save the plot for the report
+saveas(gcf, 'FinalConic.png');
 
 % save the conic
 conicName = input('Enter the name of the conic: ', 's');
