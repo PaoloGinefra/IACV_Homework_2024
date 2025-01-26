@@ -246,3 +246,15 @@ $$S_{XY} = \matrixdim{2}{1}{\hat{X}_{cam}^T, \hat{Y}_{cam}^T} \cdot (S_{cam} - O
 \includegraphics[height=9.5cm, width=\textwidth, keepaspectratio]{Report/Images/2.4-S_coordinated/S_coordinates.png}
 \caption{\label{fig:S XY coordinate}The X Y Coordinates of S}
 \end{figure}
+
+\section{Camera Localization}
+Since both the chosen origin and the chosen axis are known in the camera reference frame:
+
+$$
+R^{-1} = \matrixdim{1}{4}{\hat{X}_{cam}, \hat{Y}_{cam}, \hat{r_3}, O_{cam}}
+$$
+
+The computed $R$ matrix is:
+$$
+R = \matrixdim{4}{4}{0.9539, 0.0510, 0.2956, 0.1479,    -0.2924, 0.3790, 0.8780, -0.5679, -0.0673, -0.9240, 0.3765, -0.1038, 0, 0, 0, 1}
+$$
